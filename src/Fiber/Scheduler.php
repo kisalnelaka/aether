@@ -61,6 +61,15 @@ final class Scheduler
     }
 
     /**
+     * Enqueue an existing Fiber directly into the ready queue.
+     * Used by ConnectionPool to wake up fibers waiting for a connection.
+     */
+    public function schedule(\Fiber $fiber): void
+    {
+        $this->readyQueue->enqueue($fiber);
+    }
+
+    /**
      * Schedule a delay (non-blocking sleep).
      *
      * @param float $seconds Delay duration

@@ -126,23 +126,46 @@ function aotCompile(array $config): void
     );
 
     $timeMs = round($report['time_ms'], 2);
-    echo "Routes compiled. Don't touch the cache file.\n";
-    echo "  Hydrators generated: {$report['hydrators']}\n";
+    echo "Compilation complete. OpCache will be happy.\n";
+    echo "  Routes:             {$report['routes']}\n";
+    echo "  Hydrators:          {$report['hydrators']}\n";
+    echo "  Validators:         {$report['validators']}\n";
+    echo "  Events:             {$report['events']}\n";
+    echo "  Entities:           {$report['entities']}\n";
+    echo "  Commands:           {$report['commands']}\n";
     echo "  Class map entries:  {$report['classmap_entries']}\n";
     echo "  Time:               {$timeMs}ms\n";
-    echo "\n  Files:\n";
+    
+    echo "\n  Files generated:\n";
     foreach ($report['files_generated'] as $file) {
-        echo "    → {$file}\n";
+        echo "    → " . basename($file) . "\n";
     }
-    echo "Container memory looks okay. But who knows what you did in your code.\n";
-    echo "AOT build done. Your app might actually be fast now.\n";
+    echo "\nYour app might actually be fast now. Don't touch the cache files.\n";
 }
 
 function aotClear(): void
 {
-    $compiler = new Compiler();
-    $compiler->clearCache(AETHER_CACHE);
-    echo "[OK] Compiled cache cleared.\n";
+    $cacheDir = AETHER_CACHE;
+    $files = [
+        'compiled_routes.php',
+        'compiled_hydrators.php',
+        'compiled_classmap.php',
+        'compiled_validators.php',
+        'compiled_events.php',
+        'compiled_entities.php',
+        'compiled_commands.php',
+    ];
+
+    $count = 0;
+    foreach ($files as $file) {
+        $path = $cacheDir . DIRECTORY_SEPARATOR . $file;
+        if (is_file($path)) {
+            unlink($path);
+            $count++;
+        }
+    }
+
+    echo "[OK] Cleared {$count} compiled files from cache.\n";
 }
 
 function listRoutes(array $config): void

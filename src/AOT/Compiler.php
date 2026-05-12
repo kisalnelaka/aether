@@ -22,12 +22,20 @@ final class Compiler
     private RouteScanner $routeScanner;
     private HydratorGenerator $hydratorGenerator;
     private RouteCompiler $routeCompiler;
+    private ValidationGenerator $validationGenerator;
+    private EventGenerator $eventGenerator;
+    private EntityGenerator $entityGenerator;
+    private CommandGenerator $commandGenerator;
 
     public function __construct()
     {
         $this->routeScanner = new RouteScanner();
         $this->hydratorGenerator = new HydratorGenerator();
         $this->routeCompiler = new RouteCompiler();
+        $this->validationGenerator = new ValidationGenerator();
+        $this->eventGenerator = new EventGenerator();
+        $this->entityGenerator = new EntityGenerator();
+        $this->commandGenerator = new CommandGenerator();
     }
 
     /**
@@ -50,6 +58,10 @@ final class Compiler
         $report = [
             'routes' => 0,
             'hydrators' => 0,
+            'validators' => 0,
+            'events' => 0,
+            'entities' => 0,
+            'commands' => 0,
             'classmap_entries' => 0,
             'time_ms' => 0,
             'files_generated' => [],
@@ -57,47 +69,57 @@ final class Compiler
 
         $start = hrtime(true);
 
-        // Dump the radix tree to PHP. OpCache will optimize this better than you ever could.
+        $allPaths = array_merge($controllerPaths, $servicePaths);
+
+        // 1. Routes
         $routesFile = $cacheDir . DIRECTORY_SEPARATOR . 'compiled_routes.php';
         $tree = new RadixTree();
-
         foreach ($controllerPaths as $namespace => $directory) {
             $routes = $this->routeScanner->scanDirectory($directory, $namespace);
             foreach ($routes as $route) {
                 $tree->insert(
-                    $route['method'],
-                    $route['path'],
-                    $route['handler'],
-                    $route['controllerClass'],
-                    $route['controllerMethod'],
-                    $route['middleware'],
-                    $route['name'] ?? '',
+                    $route['method'], $route['path'], $route['handler'],
+                    $route['controllerClass'], $route['controllerMethod'],
+                    $route['middleware'], $route['name'] ?? ''
                 );
             }
             $report['routes'] += count($routes);
         }
-
         $this->routeCompiler->compile($tree, $routesFile);
         $report['files_generated'][] = $routesFile;
 
-        // Generate static factories to avoid Reflection. Because Reflection is slow.
+        // 2. Hydrators
         $hydratorsFile = $cacheDir . DIRECTORY_SEPARATOR . 'compiled_hydrators.php';
-        $allPaths = array_merge($controllerPaths, $servicePaths);
-
         foreach ($allPaths as $namespace => $directory) {
             $this->hydratorGenerator->generate($directory, $namespace, $hydratorsFile);
-            // Count classes
-            $classes = $this->countPhpFiles($directory);
-            $report['hydrators'] += $classes;
+            $report['hydrators'] += $this->countPhpFiles($directory);
         }
-
         $report['files_generated'][] = $hydratorsFile;
 
-        // 3. Generate class map
+        // 3. Validators
+        $validatorsFile = $cacheDir . DIRECTORY_SEPARATOR . 'compiled_validators.php';
+        $this->validationGenerator->generate($allPaths, $validatorsFile);
+        $report['files_generated'][] = $validatorsFile;
+
+        // 4. Events
+        $eventsFile = $cacheDir . DIRECTORY_SEPARATOR . 'compiled_events.php';
+        $this->eventGenerator->generate($allPaths, $eventsFile);
+        $report['files_generated'][] = $eventsFile;
+
+        // 5. Entities
+        $entitiesFile = $cacheDir . DIRECTORY_SEPARATOR . 'compiled_entities.php';
+        $this->entityGenerator->generate($allPaths, $entitiesFile);
+        $report['files_generated'][] = $entitiesFile;
+
+        // 6. Commands
+        $commandsFile = $cacheDir . DIRECTORY_SEPARATOR . 'compiled_commands.php';
+        $this->commandGenerator->generate($allPaths, $commandsFile);
+        $report['files_generated'][] = $commandsFile;
+
+        // 7. Class map
         $classMapFile = $cacheDir . DIRECTORY_SEPARATOR . 'compiled_classmap.php';
         $classMap = $this->buildClassMap($allPaths);
         $report['classmap_entries'] = count($classMap);
-
         $this->writeClassMap($classMap, $classMapFile);
         $report['files_generated'][] = $classMapFile;
 

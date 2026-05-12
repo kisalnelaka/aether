@@ -27,11 +27,13 @@ return [
 ];
 ```
 
-## 3. The View Engine (Keep it simple)
+## 3. The View Engine
 
-AETHER doesn't ship with a 50MB templating engine like Twig or Blade. PHP *is* a templating engine. We just need a helper function to render it.
+AETHER ships with a microscopic View engine that uses native PHP templates. No Blade, no Twig, no 50MB of parsing overhead. Just PHP.
 
-Create `app/Views/layout.php`. We'll drop Tailwind CSS from a CDN here so you don't have to configure Node.js just to make a button blue. If you want to use Vite and React later, just point your `<script type="module" src="/assets/main.js"></script>` here and AETHER will serve it.
+Initialize it in your entry point (see Step 6).
+
+Create `app/Views/layouts/app.php`:
 
 ```php
 <!DOCTYPE html>
@@ -39,10 +41,9 @@ Create `app/Views/layout.php`. We'll drop Tailwind CSS from a CDN here so you do
 <head>
     <meta charset="UTF-8">
     <title><?= htmlspecialchars($title ?? 'AETHER App') ?></title>
-    <!-- Put your UI framework here. Tailwind, Bootstrap, whatever. -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-zinc-950 text-zinc-100 font-sans antialiased p-8">
+<body class="bg-zinc-950 text-zinc-100 font-sans p-8">
     <div class="max-w-2xl mx-auto">
         <h1 class="text-3xl font-bold mb-6 tracking-tight text-white">AETHER Web App</h1>
         <?= $content ?? '' ?>
@@ -51,13 +52,13 @@ Create `app/Views/layout.php`. We'll drop Tailwind CSS from a CDN here so you do
 </html>
 ```
 
-Create `app/Views/home.php`:
+Create `app/Views/pages/home.php`:
 
 ```php
 <div class="p-6 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl">
     <h2 class="text-xl font-semibold mb-4 text-emerald-400">System Status</h2>
-    <p class="mb-2">Framework: <span class="text-zinc-400">AETHER</span></p>
-    <p class="mb-4">Time: <span class="text-zinc-400"><?= date('H:i:s') ?></span></p>
+    <p>Framework: <span class="text-zinc-400">AETHER</span></p>
+    <p>Time: <span class="text-zinc-400"><?= date('H:i:s') ?></span></p>
     
     <form action="/submit" method="POST" class="mt-6 flex gap-4">
         <input type="text" name="message" placeholder="Type something..." 
@@ -72,7 +73,7 @@ Create `app/Views/home.php`:
 
 ## 4. The Controller
 
-We need a controller to serve the view and handle the form POST. Create `app/Controllers/WebController.php`.
+Serve the view using the `View` facade.
 
 ```php
 <?php
@@ -85,44 +86,30 @@ use Aether\Attributes\Get;
 use Aether\Attributes\Post;
 use Aether\Http\Request;
 use Aether\Http\Response;
+use Aether\View\View;
 
 #[Controller]
 final class WebController
 {
-    /**
-     * Dumb view helper. Render the template into a string and return it.
-     */
-    private function view(string $view, array $data = []): string
-    {
-        extract($data);
-        ob_start();
-        require __DIR__ . '/../Views/' . $view . '.php';
-        $content = ob_get_clean();
-        
-        ob_start();
-        require __DIR__ . '/../Views/layout.php';
-        return ob_get_clean();
-    }
-
     #[Get(path: '/')]
     public function index(): Response
     {
-        return Response::html($this->view('home', ['title' => 'Home - AETHER']));
+        return View::response('pages.home', [
+            'title' => 'Home - AETHER'
+        ], layout: 'layouts.app');
     }
 
     #[Post(path: '/submit')]
     public function handleForm(Request $request): Response
     {
-        // Get the POST payload. It's raw input.
-        $body = file_get_contents('php://input');
-        parse_str($body, $post);
+        // For a full app, you'd use DTO validation here.
+        // For now, let's just grab the message.
+        $msg = $request->post('message') ?? 'Nothing';
         
-        $msg = $post['message'] ?? 'Nothing';
-        
-        // Return raw HTML or redirect. Your choice.
-        return Response::html(
-            $this->view('home', ['title' => 'Success', 'message' => "You sent: $msg"])
-        );
+        return View::response('pages.home', [
+            'title' => 'Success',
+            'message' => "You sent: $msg"
+        ], layout: 'layouts.app');
     }
 }
 ```

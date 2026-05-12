@@ -595,6 +595,50 @@ pre code {
 .token-comment { color: #8b949e; }
 .token-attr { color: #ffa657; }
 
+/* Comparison Table */
+.comparison-container {
+    width: 100%;
+    overflow-x: auto;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    min-width: 800px;
+}
+
+.comparison-table th, .comparison-table td {
+    padding: 1.25rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.comparison-table th {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+.comparison-table td {
+    color: var(--text-secondary);
+    vertical-align: top;
+}
+
+.comparison-table tr:last-child td {
+    border-bottom: none;
+}
+
+.comparison-table strong {
+    color: var(--text-primary);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .header-nav { display: none; }

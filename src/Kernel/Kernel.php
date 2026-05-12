@@ -66,22 +66,45 @@ final class Kernel
         $this->container->instance(Container::class, $this->container);
 
         // Load compiled routes. If you didn't compile them, it scans attributes and wastes CPU.
-        $compiledPath = (defined('AETHER_CACHE') ? AETHER_CACHE : '') . '/compiled_routes.php';
-        if (is_file($compiledPath)) {
+        $cacheDir = defined('AETHER_CACHE') ? AETHER_CACHE : '';
+        
+        $compiledRoutes = $cacheDir . '/compiled_routes.php';
+        if (is_file($compiledRoutes)) {
             $compiler = new RouteCompiler();
-            $tree = $compiler->load($compiledPath);
-            // Re-wrap the tree in the router
+            $tree = $compiler->load($compiledRoutes);
             $this->router = new Router($tree);
             $this->container->instance(Router::class, $this->router);
         }
 
-        // Load compiled hydrators. Same deal. Compile your code before deploying.
-        $hydratorsPath = (defined('AETHER_CACHE') ? AETHER_CACHE : '') . '/compiled_hydrators.php';
+        // Load compiled hydrators.
+        $hydratorsPath = $cacheDir . '/compiled_hydrators.php';
         if (is_file($hydratorsPath)) {
             $loader = require $hydratorsPath;
-            if (is_callable($loader)) {
-                $loader($this->container);
-            }
+            if (is_callable($loader)) { $loader($this->container); }
+        }
+
+        // Load compiled validators.
+        $validatorsPath = $cacheDir . '/compiled_validators.php';
+        if (is_file($validatorsPath)) {
+            \Aether\Validation\Validator::loadCompiled(require $validatorsPath);
+        }
+
+        // Load compiled events.
+        $eventsPath = $cacheDir . '/compiled_events.php';
+        if (is_file($eventsPath)) {
+            \Aether\Events\EventBus::loadCompiled(require $eventsPath);
+        }
+
+        // Load compiled entities.
+        $entitiesPath = $cacheDir . '/compiled_entities.php';
+        if (is_file($entitiesPath)) {
+            \Aether\Database\EntityManager::loadCompiled(require $entitiesPath);
+        }
+
+        // Load compiled commands.
+        $commandsPath = $cacheDir . '/compiled_commands.php';
+        if (is_file($commandsPath)) {
+            \Aether\Console\ConsoleRouter::loadCompiled(require $commandsPath);
         }
 
         $this->booted = true;

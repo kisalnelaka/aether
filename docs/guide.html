@@ -106,28 +106,27 @@ mkdir -p app/Controllers app/Views public/assets</code></pre>
                 <!-- STEP 3 -->
                 <section id="step-3" class="step">
                     <div class="step-header"><div class="step-number">3</div><h3>The View Engine & UI Framework</h3></div>
-                    <p>AETHER doesn't ship with a 50MB templating engine like Twig. PHP <em>is</em> a templating engine. We just need a helper function to render it.</p>
-                    <p>Create <code>app/Views/layout.php</code>. We'll drop Tailwind CSS from a CDN here so you don't have to configure Node.js just to make a button blue. If you want to use Vite and React later, just point your <code>&lt;script type="module" src="/assets/main.js"&gt;&lt;/script&gt;</code> here.</p>
+                    <p>AETHER ships with a microscopic View engine that uses native PHP templates. No Blade, no Twig, no 50MB of parsing overhead. Just PHP.</p>
+                    <p>Create <code>app/Views/layouts/app.php</code>. We'll drop Tailwind CSS from a CDN here so you don't have to configure Node.js just to make a button blue.</p>
 <pre><code>&lt;!DOCTYPE html&gt;
 &lt;html lang="en"&gt;
 &lt;head&gt;
     &lt;meta charset="UTF-8"&gt;
     &lt;title&gt;&lt;?= htmlspecialchars($title ?? 'AETHER App') ?&gt;&lt;/title&gt;
-    &lt;!-- Put your UI framework here. Tailwind, Bootstrap, whatever. --&gt;
     &lt;script src="https://cdn.tailwindcss.com"&gt;&lt;/script&gt;
 &lt;/head&gt;
-&lt;body class="bg-zinc-950 text-zinc-100 font-sans antialiased p-8"&gt;
+&lt;body class="bg-zinc-950 text-zinc-100 font-sans p-8"&gt;
     &lt;div class="max-w-2xl mx-auto"&gt;
         &lt;h1 class="text-3xl font-bold mb-6 tracking-tight text-white"&gt;AETHER Web App&lt;/h1&gt;
         &lt;?= $content ?? '' ?&gt;
     &lt;/div&gt;
 &lt;/body&gt;
 &lt;/html&gt;</code></pre>
-                    <p>Create <code>app/Views/home.php</code>:</p>
+                    <p>Create <code>app/Views/pages/home.php</code>:</p>
 <pre><code>&lt;div class="p-6 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl"&gt;
     &lt;h2 class="text-xl font-semibold mb-4 text-emerald-400"&gt;System Status&lt;/h2&gt;
-    &lt;p class="mb-2"&gt;Framework: &lt;span class="text-zinc-400"&gt;AETHER&lt;/span&gt;&lt;/p&gt;
-    &lt;p class="mb-4"&gt;Time: &lt;span class="text-zinc-400"&gt;&lt;?= date('H:i:s') ?&gt;&lt;/span&gt;&lt;/p&gt;
+    &lt;p&gt;Framework: &lt;span class="text-zinc-400"&gt;AETHER&lt;/span&gt;&lt;/p&gt;
+    &lt;p&gt;Time: &lt;span class="text-zinc-400"&gt;&lt;?= date('H:i:s') ?&gt;&lt;/span&gt;&lt;/p&gt;
     
     &lt;form action="/submit" method="POST" class="mt-6 flex gap-4"&gt;
         &lt;input type="text" name="message" placeholder="Type something..." 
@@ -143,7 +142,7 @@ mkdir -p app/Controllers app/Views public/assets</code></pre>
                 <!-- STEP 4 -->
                 <section id="step-4" class="step">
                     <div class="step-header"><div class="step-number">4</div><h3>The Controller</h3></div>
-                    <p>We need a controller to serve the view and handle the form POST. Create <code>app/Controllers/WebController.php</code>.</p>
+                    <p>Serve the view using the <code>View</code> facade. Create <code>app/Controllers/WebController.php</code>.</p>
 <pre><code><span class="token-keyword">&lt;?php</span>
 <span class="token-keyword">declare</span>(<span class="token-function">strict_types</span>: <span class="token-number">1</span>);
 
@@ -154,38 +153,28 @@ mkdir -p app/Controllers app/Views public/assets</code></pre>
 <span class="token-keyword">use</span> <span class="token-type">Aether\Attributes\Post</span>;
 <span class="token-keyword">use</span> <span class="token-type">Aether\Http\Request</span>;
 <span class="token-keyword">use</span> <span class="token-type">Aether\Http\Response</span>;
+<span class="token-keyword">use</span> <span class="token-type">Aether\View\View</span>;
 
 <span class="token-attr">#[Controller]</span>
 <span class="token-keyword">final class</span> <span class="token-type">WebController</span>
 {
-    <span class="token-keyword">private function</span> <span class="token-function">view</span>(<span class="token-keyword">string</span> <span class="token-variable">$view</span>, <span class="token-keyword">array</span> <span class="token-variable">$data</span> = []): <span class="token-keyword">string</span>
-    {
-        <span class="token-function">extract</span>(<span class="token-variable">$data</span>);
-        <span class="token-function">ob_start</span>();
-        <span class="token-keyword">require</span> <span class="token-variable">__DIR__</span> . <span class="token-string">'/../Views/'</span> . <span class="token-variable">$view</span> . <span class="token-string">'.php'</span>;
-        <span class="token-variable">$content</span> = <span class="token-function">ob_get_clean</span>();
-        
-        <span class="token-function">ob_start</span>();
-        <span class="token-keyword">require</span> <span class="token-variable">__DIR__</span> . <span class="token-string">'/../Views/layout.php'</span>;
-        <span class="token-keyword">return</span> <span class="token-function">ob_get_clean</span>();
-    }
-
     <span class="token-attr">#[Get(path: '/')]</span>
     <span class="token-keyword">public function</span> <span class="token-function">index</span>(): <span class="token-type">Response</span>
     {
-        <span class="token-keyword">return</span> <span class="token-type">Response</span>::<span class="token-function">html</span>(<span class="token-variable">$this</span>-><span class="token-function">view</span>(<span class="token-string">'home'</span>, [<span class="token-string">'title'</span> => <span class="token-string">'Home - AETHER'</span>]));
+        <span class="token-keyword">return</span> <span class="token-type">View</span>::<span class="token-function">response</span>(<span class="token-string">'pages.home'</span>, [
+            <span class="token-string">'title'</span> => <span class="token-string">'Home - AETHER'</span>
+        ], <span class="token-attr">layout</span>: <span class="token-string">'layouts.app'</span>);
     }
 
     <span class="token-attr">#[Post(path: '/submit')]</span>
     <span class="token-keyword">public function</span> <span class="token-function">handleForm</span>(<span class="token-type">Request</span> <span class="token-variable">$request</span>): <span class="token-type">Response</span>
     {
-        <span class="token-variable">$body</span> = <span class="token-function">file_get_contents</span>(<span class="token-string">'php://input'</span>);
-        <span class="token-function">parse_str</span>(<span class="token-variable">$body</span>, <span class="token-variable">$post</span>);
-        <span class="token-variable">$msg</span> = <span class="token-variable">$post</span>[<span class="token-string">'message'</span>] ?? <span class="token-string">'Nothing'</span>;
+        <span class="token-variable">$msg</span> = <span class="token-variable">$request</span>-><span class="token-function">post</span>(<span class="token-string">'message'</span>) ?? <span class="token-string">'Nothing'</span>;
         
-        <span class="token-keyword">return</span> <span class="token-type">Response</span>::<span class="token-function">html</span>(
-            <span class="token-variable">$this</span>-><span class="token-function">view</span>(<span class="token-string">'home'</span>, [<span class="token-string">'title'</span> => <span class="token-string">'Success'</span>, <span class="token-string">'message'</span> => <span class="token-string">"You sent: $msg"</span>])
-        );
+        <span class="token-keyword">return</span> <span class="token-type">View</span>::<span class="token-function">response</span>(<span class="token-string">'pages.home'</span>, [
+            <span class="token-string">'title'</span> => <span class="token-string">'Success'</span>,
+            <span class="token-string">'message'</span> => <span class="token-string">"You sent: $msg"</span>
+        ], <span class="token-attr">layout</span>: <span class="token-string">'layouts.app'</span>);
     }
 }</code></pre>
                 </section>

@@ -1,106 +1,94 @@
 # AETHER
 
-A PHP 8.3 framework that doesn't suck.
+**The Anti-Bloat Framework.** PHP 8.3+. Zero dependencies. Resident memory. AOT-compiled.
 
-I got tired of every framework loading 50MB of bloated garbage just to print "hello world" and taking 50ms to boot up. So I built this. 
-It runs in persistent memory. It uses fibers. It has exactly zero external dependencies. I didn't even use Composer because I don't need half the internet downloaded to my drive just to pad a string. 
+AETHER isn't here to hold your hand or manage your YAML files. It's built for engineers who are tired of `vendor/` directories larger than their production databases. It boots once, stays in memory, and uses Fibers to handle concurrency without the overhead of traditional request lifecycles.
 
-It's fast. Core is under 180KB. If you want to build a monolith with 300 packages, go use Laravel. If you want raw speed and don't mind writing actual code, you're in the right place.
+## 🏛️ The Core Philosophy
 
-## Why
+1.  **Zero Dependencies**: No Composer. No `vendor/`. No security vulnerabilities in packages you didn't even know you had.
+2.  **Resident Memory**: The application stays alive. Database connections stay open. Routes stay matched.
+3.  **AOT First**: Reflection is for development. Production uses Ahead-of-Time compiled static PHP factories.
+4.  **Byte-Level Precision**: We use Radix trees and byte manipulation instead of heavy Regex patterns.
 
-- **Boot time is ~0ms.** It boots once and stays in memory. 
-- **No Regex.** Regex routing is slow and lazy. I wrote a proper Radix Tree. It matches in O(K) time. 
-- **Fibers.** It does non-blocking I/O natively. No callback hell.
-- **No Reflection at runtime.** Reflection is slow. We compile attributes down to static factories before running.
-- **Workers.** Uses `pcntl_fork`. It just works.
+---
 
-## Installation
+## 📊 AETHER vs. The World
 
-Just clone it. There's no package manager. 
+An honest comparison. No marketing fluff.
 
-```bash
-git clone https://github.com/kisalnelaka/aether.git
-cd aether
-```
+| Framework | Language | Architecture | Pros | Cons |
+| :--- | :--- | :--- | :--- | :--- |
+| **AETHER** | PHP | Resident/AOT | < 250KB, 0.05ms boot, Fiber-concurrency, Zero deps. | Tiny ecosystem, no community plugins, requires PHP 8.3+. |
+| **Laravel** | PHP | Req/Resp | Massive ecosystem, incredible DX, Eloquent is powerful. | Heavy bloat (50MB+ vendor), slow boot (~20-50ms), Reflection-heavy. |
+| **Swoole** | PHP/C++ | Event Loop | Blazing fast, true async, supports Coroutines. | Requires C extension, non-standard PHP behavior, complex debugging. |
+| **Express** | JS | Event Loop | Simple, huge ecosystem, very flexible. | Middleware hell, callback/async soup, high memory for high load. |
+| **Fastify** | JS | Event Loop | Faster than Express, low overhead, JSON-first. | JS single-threaded bottlenecks, dependency heavy. |
+| **Gin / Fiber** | Go | Binary | Compiled binary, extreme throughput, type-safe. | Static typing can be verbose, requires learning Go's pointer/concurrency model. |
+| **Actix / Axum** | Rust | Binary | Memory safety, fastest in the world, zero-cost abstractions. | Brutal learning curve (borrow checker), long compile times. |
+| **FastAPI** | Python | ASGI | Great DX, auto-docs, Pydantic validation. | Python's GIL limits true parallelism, overhead of asyncio. |
+| **Spring Boot** | Java | JVM | Enterprise standard, infinite features, very stable. | Enormous memory usage (500MB+ idle), slow startup (seconds), XML/Annotation hell. |
 
-## How to use it
+---
 
-Look at the `example/` folder. It's not complicated. 
+## 🛠️ Feature Suite
 
+AETHER provides everything you need for a modern microservice in a single file-system tree.
+
+- **Radix Router**: O(K) lookup. No regex. Supports wildcards and groups.
+- **DI Container**: State-aware scopes (Persistent, Ephemeral, Transient).
+- **Fiber Scheduler**: Cooperative multitasking for async I/O (DB, HTTP, Sockets).
+- **AOT Compiler**: Generates static code for Routes, Hydrators, Validators, and Events.
+- **Connection Pool**: Fiber-aware pooling for MySQL and PostgreSQL.
+- **Entity Manager**: Zero-reflection Data Mapper ORM.
+- **Job Queue**: In-memory background jobs with Fiber workers.
+- **WebSocket Server**: Full RFC 6455 implementation.
+- **File Storage**: Local + S3 (manual SigV4, no SDK).
+- **Validation**: Attribute-based DTO validation compiled to raw PHP.
+- **Shared Memory**: Cross-process caching via `shmop`.
+
+---
+
+## 🚀 Quick Start
+
+### 1. Boot it
 ```php
 <?php
-declare(strict_types=1);
+require_once 'aether.php';
+$app = Aether\Kernel\Application::create(AETHER_ROOT);
 
-require_once __DIR__ . '/aether.php';
-
-use Aether\Kernel\Application;
-
-$app = Application::create(__DIR__);
-
-// map your routes
-$app->get('/', 'App\\Controllers\\HomeController@index', 'home');
+$app->get('/api/v1/user/{id}', 'App\Controllers\UserController@show');
 
 $app->run();
 ```
 
-Controllers look like this. I used attributes. 
-
-```php
-<?php
-declare(strict_types=1);
-
-namespace App\Controllers;
-
-use Aether\Attributes\Controller;
-use Aether\Attributes\Get;
-use Aether\Http\Request;
-use Aether\Http\Response;
-
-#[Controller(prefix: '/api')]
-final class UserController
-{
-    #[Get(path: '/users/{id}', name: 'users.show')]
-    public function show(Request $request): Response
-    {
-        return Response::json([
-            'user' => ['id' => $request->getRouteParam('id')],
-        ]);
-    }
-}
-```
-
-Run it:
+### 2. Compile it (Production)
 ```bash
-php -S localhost:8080 example/app.php
+php bin/aether aot:compile
 ```
+This scans your attributes and generates static files in `cache/`. At runtime, AETHER will skip all scanning and simply `require` the pre-optimized maps.
 
-Or run the actual worker manager if you want performance:
+### 3. Serve it
 ```bash
-php bin/aether serve
+php bin/aether serve --workers=8
 ```
+Starts the WorkerManager. It forks into 8 processes, each managing its own event loop and connection pool.
 
-## Docs
+---
 
-Read the docs in the `docs/` folder or on the [Github Pages](https://kisalnelaka.github.io/aether/). If you don't read them and open an issue asking how the DI container works, I'll close it.
+## 📝 Honest Trade-offs
 
-- [Architecture](docs/ARCHITECTURE.md) - How it actually works
-- [Routing](docs/ROUTING.md) - Stop using regex
-- [Container](docs/CONTAINER.md) - DI that doesnt leak memory
-- [Fibers](docs/FIBERS.md) - Async I/O
-- [AOT](docs/AOT.md) - Compiling the attributes
-- [CLI](docs/CLI.md) - The few commands it has
+**Why use AETHER?**
+- You want the absolute maximum performance PHP can offer without writing C.
+- You hate managing 1000+ dependencies.
+- You need a single-binary-like experience where you just copy a folder and it works.
+- You are building high-performance microservices or real-time (WebSocket) apps.
 
-## Rules I followed
+**Why NOT use AETHER?**
+- You need a CMS or a blog (use WordPress/Laravel).
+- You need a specific third-party integration (Stripe, AWS SDK, etc.) and don't want to write the HTTP calls yourself.
+- You are not comfortable with persistent-memory concepts (managing state, memory leaks).
+- You want a framework with a huge StackOverflow presence.
 
-- `declare(strict_types=1)` everywhere. No exceptions.
-- No `preg_match`. It's banned.
-- No Composer.
-- No circular dependencies. The container will throw an error and refuse to boot if you write spaghetti code. 
-
-## License
-
-MIT. Do whatever you want with it, just don't blame me if it breaks. 
-
-- [kisalnelaka](https://github.com/kisalnelaka)
-- [LinkedIn](https://linkedin.com/in/kisalnelaka)
+## ⚖️ License
+MIT. Built by engineers who value code over configuration.

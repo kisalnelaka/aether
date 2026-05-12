@@ -268,6 +268,79 @@
         </div>
     </section>
 
+    <!-- ═══════════════ COMPARISON ═══════════════ -->
+    <section class="section" id="comparison">
+        <div class="container">
+            <div class="section-label">Honest Truth</div>
+            <h2 class="section-title">AETHER vs. The World.</h2>
+            <p class="section-subtitle">
+                No marketing fluff. Just technical trade-offs. 
+            </p>
+
+            <div class="comparison-container">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Framework</th>
+                            <th>Language</th>
+                            <th>Architecture</th>
+                            <th>Pros</th>
+                            <th>Cons</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>AETHER</strong></td>
+                            <td>PHP 8.3+</td>
+                            <td>Resident / AOT</td>
+                            <td>Sub-0.1ms boot, zero deps, O(K) routing, low RAM.</td>
+                            <td>Tiny ecosystem, high entry bar for beginners.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Laravel</strong></td>
+                            <td>PHP</td>
+                            <td>Req / Resp</td>
+                            <td>Massive ecosystem, best-in-class DX, huge community.</td>
+                            <td>Heavy bloat, slow startup, reflection-heavy.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Fastify</strong></td>
+                            <td>JS / TS</td>
+                            <td>Event Loop</td>
+                            <td>Low overhead, JSON-first, high throughput.</td>
+                            <td>Dependency heavy, single-threaded bottlenecks.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Go (Fiber)</strong></td>
+                            <td>Go</td>
+                            <td>Binary</td>
+                            <td>Compiled speed, extreme concurrency, type-safe.</td>
+                            <td>Pointer complexity, verbose error handling.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rust (Axum)</strong></td>
+                            <td>Rust</td>
+                            <td>Binary</td>
+                            <td>Memory safety, fastest possible throughput.</td>
+                            <td>Brutal learning curve, long compile times.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Spring Boot</strong></td>
+                            <td>Java</td>
+                            <td>JVM</td>
+                            <td>Enterprise stability, infinite features.</td>
+                            <td>Huge memory usage (500MB+ idle), slow boot.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p style="margin-top: 3rem; font-size: 0.9rem; font-style: italic;">
+                * Comparison based on standard "Hello World" to "Small Microservice" benchmarks. Results vary by workload.
+            </p>
+        </div>
+    </section>
+
     <!-- ═══════════════ ARCHITECTURE ═══════════════ -->
     <section class="section" id="architecture">
         <div class="container">

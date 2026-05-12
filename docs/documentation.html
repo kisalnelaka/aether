@@ -116,8 +116,8 @@ cd myapp</code></pre>
                         <tbody>
                             <tr><td>Alpha</td><td>Persistent Execution Engine</td><td>WorkerManager, Container, SharedMemoryCache</td></tr>
                             <tr><td>Beta</td><td>Radix Tree Router</td><td>RadixTree, Router, RouteCompiler</td></tr>
-                            <tr><td>Gamma</td><td>Fiber Async I/O</td><td>Scheduler, Deferred, AsyncDatabase, AsyncHttpClient</td></tr>
-                            <tr><td>Delta</td><td>Zero-Reflection Schema</td><td>RouteScanner, HydratorGenerator, Compiler</td></tr>
+                            <tr><td>Gamma</td><td>Fiber Async I/O</td><td>Scheduler, WebSocketServer, JobQueue, ConnectionPool</td></tr>
+                            <tr><td>Delta</td><td>Zero-Reflection Schema</td><td>AOT\Compiler, AOT\HydratorGenerator, AOT\ValidationGenerator</td></tr>
                         </tbody>
                     </table>
 
@@ -300,6 +300,10 @@ cd myapp</code></pre>
                         <tbody>
                             <tr><td>#[Route] attributes</td><td>compiled_routes.php (Radix Tree array)</td></tr>
                             <tr><td>#[Inject] attributes</td><td>compiled_hydrators.php (static factories)</td></tr>
+                            <tr><td>#[Validate] attributes</td><td>compiled_validators.php (flat if-statements)</td></tr>
+                            <tr><td>#[Listener] attributes</td><td>compiled_events.php (dispatch maps)</td></tr>
+                            <tr><td>#[Entity] attributes</td><td>compiled_entities.php (ORM hydrators)</td></tr>
+                            <tr><td>#[Command] attributes</td><td>compiled_commands.php (CLI map)</td></tr>
                             <tr><td>All PHP classes</td><td>compiled_classmap.php (autoloader map)</td></tr>
                         </tbody>
                     </table>

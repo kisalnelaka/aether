@@ -7,11 +7,18 @@ namespace Aether\Kernel;
 use Aether\Container\Container;
 use Aether\Router\Router;
 use Aether\Fiber\Scheduler;
+use Aether\Events\EventBus;
+use Aether\Queue\Queue;
+use Aether\View\View;
+use Aether\Storage\Storage;
+use Aether\Storage\LocalDisk;
 
 /**
- * Application — the user-facing entry point for building an AETHER app.
+ * Application -- the user-facing entry point for building an AETHER app.
  *
  * Provides a fluent API for configuration, route registration, and booting.
+ * All the new modules (events, queue, storage, views, websocket) are wired
+ * here as lazy-loaded singletons. They only initialize when you use them.
  *
  * @package Aether\Kernel
  */
@@ -24,6 +31,9 @@ final class Application
     /** @var array<string, mixed> */
     private array $config = [];
     private bool $booted = false;
+
+    private ?EventBus $eventBus = null;
+    private ?Queue $queue = null;
 
     public function __construct(string $basePath = '')
     {
@@ -141,6 +151,66 @@ final class Application
         return $this;
     }
 
+    // ── Events ──
+
+    /**
+     * Get the event bus. Created lazily.
+     */
+    public function events(): EventBus
+    {
+        if ($this->eventBus === null) {
+            $this->eventBus = new EventBus($this->container);
+            $this->container->instance(EventBus::class, $this->eventBus);
+        }
+        return $this->eventBus;
+    }
+
+    /**
+     * Register an event listener.
+     */
+    public function on(string $event, string $listenerClass, string $method = 'handle'): self
+    {
+        $this->events()->listen($event, $listenerClass, $method);
+        return $this;
+    }
+
+    // ── Queue ──
+
+    /**
+     * Get the job queue. Created lazily.
+     */
+    public function queue(): Queue
+    {
+        if ($this->queue === null) {
+            $this->queue = new Queue($this->container, $this->scheduler);
+            $this->container->instance(Queue::class, $this->queue);
+        }
+        return $this->queue;
+    }
+
+    // ── Views ──
+
+    /**
+     * Configure the view engine paths.
+     */
+    public function views(string $viewPath, string $layoutPath = ''): self
+    {
+        View::configure($viewPath, $layoutPath);
+        return $this;
+    }
+
+    // ── Storage ──
+
+    /**
+     * Configure local file storage.
+     */
+    public function storage(string $storagePath, string $baseUrl = '/storage'): self
+    {
+        Storage::addDisk('local', new LocalDisk($storagePath, $baseUrl));
+        Storage::setDefault('local');
+        return $this;
+    }
+
     // ── Lifecycle ──
 
     /**
@@ -174,6 +244,7 @@ final class Application
     }
 
     public function getKernel(): Kernel { return $this->kernel; }
+    public function getScheduler(): Scheduler { return $this->scheduler; }
     public function isBooted(): bool { return $this->booted; }
 
     /**
