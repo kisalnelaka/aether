@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AETHER - The Fastest PHP Framework</title>
+    <meta name="description" content="AETHER is a zero-dependency PHP 8.3+ framework with O(K) radix tree routing, PHP Fiber concurrency, AOT compilation, and a sub-200KB footprint.">
+    <meta name="keywords" content="PHP framework, radix tree, PHP fibers, AOT compiler, high performance PHP">
+    <meta name="author" content="Kisal Nelaka">
+    <link rel="canonical" href="https://kisalnelaka.github.io/aether/">
+    <meta property="og:title" content="AETHER Framework">
+    <meta property="og:description" content="The fastest, smallest, zero-dependency PHP 8.3+ web framework.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://kisalnelaka.github.io/aether/">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- ═══════════════ HEADER ═══════════════ -->
+    <header class="header" id="top">
+        <div class="header-inner">
+            <a href="index.html" class="header-logo">
+                <span class="logo-mark">A</span>
+                AETHER
+            </a>
+
+            <nav class="header-nav" id="main-nav">
+                <a href="#features">Features</a>
+                <a href="#architecture">Architecture</a>
+                <a href="documentation.html">Docs</a>
+                <a href="guide.html">Guide</a>
+                <a href="https://github.com/kisalnelaka/aether/blob/main/CHANGELOG.md">Changelog</a>
+            </nav>
+
+            <div class="header-actions">
+                <a href="https://github.com/kisalnelaka/aether" class="btn btn-ghost" target="_blank" rel="noopener">
+                    GitHub
+                </a>
+                <a href="guide.html" class="btn btn-primary">Get Started</a>
+                <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle menu">&#9776;</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ═══════════════ HERO ═══════════════ -->
+    <section class="hero">
+        <div class="container hero-content">
+            <div class="hero-badge">
+                <span class="dot"></span>
+                v1.0.0 released
+            </div>
+
+            <h1>
+                Build at the<br>
+                <span class="highlight">speed of thought.</span>
+            </h1>
+
+            <p class="hero-description">
+                A zero-dependency PHP 8.3+ framework. Under 180KB. No Composer. It doesn't use Regex. It just works. 
+            </p>
+
+            <div class="hero-actions">
+                <a href="guide.html" class="btn btn-primary btn-lg">Read the Guide</a>
+                <a href="https://github.com/kisalnelaka/aether" class="btn btn-ghost btn-lg" target="_blank" rel="noopener">View Source</a>
+            </div>
+
+            <div class="hero-code">
+<pre><code><span class="token-keyword">use</span> <span class="token-type">Aether\Kernel\Application</span>;
+
+<span class="token-variable">$app</span> = <span class="token-type">Application</span>::<span class="token-function">create</span>(<span class="token-variable">__DIR__</span>);
+
+<span class="token-variable">$app</span>-><span class="token-function">get</span>(<span class="token-string">'/users/{id}'</span>, <span class="token-string">'UserController@show'</span>);
+<span class="token-variable">$app</span>-><span class="token-function">run</span>();</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ METRICS ═══════════════ -->
+    <section class="metrics">
+        <div class="container">
+            <div class="metrics-grid">
+                <div class="metric">
+                    <div class="metric-value">~0<span class="unit">ms</span></div>
+                    <div class="metric-label">Boot Latency</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">O(K)</div>
+                    <div class="metric-label">Routing Complexity</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">180<span class="unit">KB</span></div>
+                    <div class="metric-label">Core Size</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">0</div>
+                    <div class="metric-label">Dependencies</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value">0</div>
+                    <div class="metric-label">Regex Calls</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ FEATURES ═══════════════ -->
+    <section class="section" id="features">
+        <div class="container">
+            <div class="section-label">Capabilities</div>
+            <h2 class="section-title">Built for speed, not comfort.</h2>
+            <p class="section-subtitle">
+                No abstractions on top of abstractions. Just raw PHP 8.3. 
+            </p>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">R</div>
+                    <h3>Radix Tree Router</h3>
+                    <p>Regex routers are lazy. We use a compressed prefix tree. O(K) lookup. No regex anywhere.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">F</div>
+                    <h3>Fiber Concurrency</h3>
+                    <p>DB queries and HTTP requests automatically suspend the fiber. No callback hell. It just handles concurrent requests on one thread.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">A</div>
+                    <h3>AOT Compilation</h3>
+                    <p>Reflection at runtime is slow. We compile your attributes down to static factory functions before deploying.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">D</div>
+                    <h3>Scope-Safe Container</h3>
+                    <p>If you put request state in a persistent service, you leak data. The container forces scope separation so you don't mess it up.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">W</div>
+                    <h3>Persistent Workers</h3>
+                    <p>It boots once. It handles thousands of requests without re-initializing. Recycle it when your code inevitably leaks memory.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">C</div>
+                    <h3>Shmop Cache</h3>
+                    <p>Cross-process cache without hitting the disk. Because reading files on every request is dumb.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">#</div>
+                    <h3>Attributes</h3>
+                    <p>No YAML. No XML. No parsing docblocks like it's 2012. Native PHP 8 attributes only.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">0</div>
+                    <h3>Zero Dependencies</h3>
+                    <p>No Composer. Period. I don't need to download 30MB of node_modules... wait, wrong language. Still banned.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ CODE EXAMPLES ═══════════════ -->
+    <section class="section" id="examples" style="background: var(--bg-secondary);">
+        <div class="container">
+            <div class="section-label">Usage</div>
+            <h2 class="section-title">Less boilerplate.</h2>
+            <p class="section-subtitle">
+                Stop writing 40 lines of XML to register a controller.
+            </p>
+
+            <div class="code-example">
+                <div class="code-tabs">
+                    <button class="code-tab active" data-tab="controller">Controller</button>
+                    <button class="code-tab" data-tab="routing">Routing</button>
+                    <button class="code-tab" data-tab="middleware">Middleware</button>
+                    <button class="code-tab" data-tab="async">Async I/O</button>
+                </div>
+
+                <div class="code-panel active" data-panel="controller">
+<pre><code><span class="token-keyword">&lt;?php</span>
+
+<span class="token-keyword">declare</span>(<span class="token-function">strict_types</span>: <span class="token-number">1</span>);
+
+<span class="token-keyword">namespace</span> <span class="token-type">App\Controllers</span>;
+
+<span class="token-keyword">use</span> <span class="token-type">Aether\Attributes\Controller</span>;
+<span class="token-keyword">use</span> <span class="token-type">Aether\Attributes\Get</span>;
+<span class="token-keyword">use</span> <span class="token-type">Aether\Http\Request</span>;
+<span class="token-keyword">use</span> <span class="token-type">Aether\Http\Response</span>;
+
+<span class="token-attr">#[Controller(prefix: '/api')]</span>
+<span class="token-keyword">final class</span> <span class="token-type">UserController</span>
+{
+    <span class="token-attr">#[Get(path: '/users/{id}', name: 'users.show')]</span>
+    <span class="token-keyword">public function</span> <span class="token-function">show</span>(<span class="token-type">Request</span> <span class="token-variable">$request</span>): <span class="token-type">Response</span>
+    {
+        <span class="token-variable">$id</span> = <span class="token-variable">$request</span>-><span class="token-function">getRouteParam</span>(<span class="token-string">'id'</span>);
+
+        <span class="token-keyword">return</span> <span class="token-type">Response</span>::<span class="token-function">json</span>([
+            <span class="token-string">'user'</span> => [<span class="token-string">'id'</span> => <span class="token-variable">$id</span>],
+        ]);
+    }
+}</code></pre>
+                </div>
+
+                <div class="code-panel" data-panel="routing">
+<pre><code><span class="token-comment">// Manual route registration</span>
+<span class="token-variable">$app</span>-><span class="token-function">get</span>(<span class="token-string">'/users'</span>, <span class="token-string">'UserController@index'</span>);
+<span class="token-variable">$app</span>-><span class="token-function">get</span>(<span class="token-string">'/users/{id}'</span>, <span class="token-string">'UserController@show'</span>);
+<span class="token-variable">$app</span>-><span class="token-function">post</span>(<span class="token-string">'/users'</span>, <span class="token-string">'UserController@store'</span>);
+
+<span class="token-comment">// Route groups with shared prefix and middleware</span>
+<span class="token-variable">$app</span>-><span class="token-function">group</span>(<span class="token-string">'/api/v1'</span>, <span class="token-keyword">function</span> (<span class="token-variable">$router</span>) {
+    <span class="token-variable">$router</span>-><span class="token-function">get</span>(<span class="token-string">'/tasks'</span>, <span class="token-string">'TaskController@index'</span>);
+    <span class="token-variable">$router</span>-><span class="token-function">post</span>(<span class="token-string">'/tasks'</span>, <span class="token-string">'TaskController@create'</span>);
+}, <span class="token-attr">middleware</span>: [<span class="token-string">'AuthMiddleware'</span>]);
+
+<span class="token-comment">// Wildcard catch-all</span>
+<span class="token-variable">$app</span>-><span class="token-function">get</span>(<span class="token-string">'/files/{path*}'</span>, <span class="token-string">'FileController@serve'</span>);</code></pre>
+                </div>
+
+                <div class="code-panel" data-panel="middleware">
+<pre><code><span class="token-keyword">final class</span> <span class="token-type">TimingMiddleware</span> <span class="token-keyword">implements</span> <span class="token-type">MiddlewareInterface</span>
+{
+    <span class="token-keyword">public function</span> <span class="token-function">handle</span>(
+        <span class="token-type">Request</span> <span class="token-variable">$request</span>,
+        <span class="token-keyword">callable</span> <span class="token-variable">$next</span>,
+    ): <span class="token-type">Response</span> {
+        <span class="token-variable">$start</span> = <span class="token-function">hrtime</span>(<span class="token-keyword">true</span>);
+
+        <span class="token-variable">$response</span> = <span class="token-variable">$next</span>(<span class="token-variable">$request</span>);
+
+        <span class="token-variable">$ms</span> = (<span class="token-function">hrtime</span>(<span class="token-keyword">true</span>) - <span class="token-variable">$start</span>) / <span class="token-number">1_000_000</span>;
+
+        <span class="token-keyword">return</span> <span class="token-variable">$response</span>
+            -><span class="token-function">withHeader</span>(<span class="token-string">'X-Response-Time'</span>, <span class="token-variable">$ms</span> . <span class="token-string">'ms'</span>);
+    }
+}</code></pre>
+                </div>
+
+                <div class="code-panel" data-panel="async">
+<pre><code><span class="token-comment">// Fiber-aware database query</span>
+<span class="token-comment">// Suspends the current fiber during I/O</span>
+<span class="token-variable">$users</span> = <span class="token-variable">$db</span>-><span class="token-function">query</span>(
+    <span class="token-string">'SELECT * FROM users WHERE active = ?'</span>,
+    [<span class="token-number">1</span>],
+);
+
+<span class="token-comment">// Fiber-aware HTTP client</span>
+<span class="token-variable">$response</span> = <span class="token-variable">$http</span>-><span class="token-function">get</span>(<span class="token-string">'https://api.example.com/data'</span>);
+
+<span class="token-comment">// Non-blocking JSON POST</span>
+<span class="token-variable">$result</span> = <span class="token-variable">$http</span>-><span class="token-function">postJson</span>(
+    <span class="token-string">'https://api.example.com/webhook'</span>,
+    [<span class="token-string">'event'</span> => <span class="token-string">'user.created'</span>],
+);</code></pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ ARCHITECTURE ═══════════════ -->
+    <section class="section" id="architecture">
+        <div class="container">
+            <div class="section-label">Design</div>
+            <h2 class="section-title">How it actually works.</h2>
+            <p class="section-subtitle">
+                Four modules. One job each.
+            </p>
+
+            <div class="arch-grid">
+                <div class="arch-card">
+                    <div class="arch-letter">&alpha;</div>
+                    <h4>Execution Engine</h4>
+                    <p>Persistent workers, state-safe DI, shmop cache, signal handling</p>
+                </div>
+                <div class="arch-card">
+                    <div class="arch-letter">&beta;</div>
+                    <h4>Radix Router</h4>
+                    <p>Compiled prefix tree, O(K) matching, zero regex, AOT serialization</p>
+                </div>
+                <div class="arch-card">
+                    <div class="arch-letter">&gamma;</div>
+                    <h4>Fiber I/O</h4>
+                    <p>Event loop scheduler, async DB, async HTTP, non-blocking sockets</p>
+                </div>
+                <div class="arch-card">
+                    <div class="arch-letter">&delta;</div>
+                    <h4>Zero Reflection</h4>
+                    <p>PHP 8 Attributes, AOT hydrators, static factory generation</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ INSTALL / GET STARTED ═══════════════ -->
+    <section class="section" id="install" style="background: var(--bg-secondary);">
+        <div class="container" style="text-align: center;">
+            <div class="section-label">Installation</div>
+            <h2 class="section-title">Stop using package managers.</h2>
+            <p class="section-subtitle" style="margin: 0 auto 2rem;">
+                Just clone it. It's not hard. 
+            </p>
+
+            <div class="hero-code" style="margin-bottom: 2.5rem;">
+<pre><code><span class="token-comment"># Clone the framework</span>
+git clone https://github.com/kisalnelaka/aether.git myapp
+<span class="token-keyword">cd</span> myapp
+
+<span class="token-comment"># Start the development server</span>
+php -S localhost:8080 example/app.php
+
+<span class="token-comment"># Compile routes and hydrators for production</span>
+php bin/aether aot:compile</code></pre>
+            </div>
+
+            <div class="hero-actions">
+                <a href="guide.html" class="btn btn-primary btn-lg">Full Tutorial</a>
+                <a href="documentation.html" class="btn btn-ghost btn-lg">Documentation</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ DOCUMENTATION LINKS ═══════════════ -->
+    <section class="section" id="docs">
+        <div class="container">
+            <div class="section-label">Reference</div>
+            <h2 class="section-title">Read the manuals.</h2>
+            <p class="section-subtitle">
+                If you open an issue without reading these, I'm closing it.
+            </p>
+
+            <div class="docs-grid">
+                <a href="documentation.html#architecture" class="doc-link">
+                    <div class="doc-icon">&alpha;</div>
+                    <div class="doc-link-text">
+                        <h4>Architecture</h4>
+                        <p>System design, module breakdown, memory model</p>
+                    </div>
+                </a>
+                <a href="documentation.html#routing" class="doc-link">
+                    <div class="doc-icon">&beta;</div>
+                    <div class="doc-link-text">
+                        <h4>Routing</h4>
+                        <p>Radix tree, dynamic params, wildcards, groups</p>
+                    </div>
+                </a>
+                <a href="documentation.html#container" class="doc-link">
+                    <div class="doc-icon">DI</div>
+                    <div class="doc-link-text">
+                        <h4>Container</h4>
+                        <p>Service scopes, bindings, AOT hydrators</p>
+                    </div>
+                </a>
+                <a href="documentation.html#fibers" class="doc-link">
+                    <div class="doc-icon">&gamma;</div>
+                    <div class="doc-link-text">
+                        <h4>Fibers</h4>
+                        <p>Async I/O, scheduler, database, HTTP client</p>
+                    </div>
+                </a>
+                <a href="documentation.html#aot" class="doc-link">
+                    <div class="doc-icon">&delta;</div>
+                    <div class="doc-link-text">
+                        <h4>AOT Compiler</h4>
+                        <p>Attribute scanning, compilation, output formats</p>
+                    </div>
+                </a>
+                <a href="documentation.html#cli" class="doc-link">
+                    <div class="doc-icon">&gt;_</div>
+                    <div class="doc-link-text">
+                        <h4>CLI Reference</h4>
+                        <p>All commands with usage examples</p>
+                    </div>
+                </a>
+                <a href="guide.html" class="doc-link">
+                    <div class="doc-icon">01</div>
+                    <div class="doc-link-text">
+                        <h4>Tutorial</h4>
+                        <p>Build a complete REST API step by step</p>
+                    </div>
+                </a>
+                <a href="https://github.com/kisalnelaka/aether/blob/main/CONTRIBUTING.md" class="doc-link" target="_blank" rel="noopener">
+                    <div class="doc-icon">+</div>
+                    <div class="doc-link-text">
+                        <h4>Contributing</h4>
+                        <p>Code standards, submission process</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ FOOTER ═══════════════ -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <h3>AETHER</h3>
+                    <p>A PHP 8.3 framework built because I got tired of bloated garbage.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Framework</h4>
+                    <ul>
+                        <li><a href="documentation.html">Documentation</a></li>
+                        <li><a href="guide.html">Tutorial</a></li>
+                        <li><a href="https://github.com/kisalnelaka/aether/blob/main/CHANGELOG.md">Changelog</a></li>
+                        <li><a href="https://github.com/kisalnelaka/aether/blob/main/LICENSE">License</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Community</h4>
+                    <ul>
+                        <li><a href="https://github.com/kisalnelaka/aether" target="_blank" rel="noopener">GitHub</a></li>
+                        <li><a href="https://github.com/kisalnelaka/aether/issues" target="_blank" rel="noopener">Issues</a></li>
+                        <li><a href="https://github.com/kisalnelaka/aether/discussions" target="_blank" rel="noopener">Discussions</a></li>
+                        <li><a href="https://github.com/kisalnelaka/aether/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener">Contributing</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Author</h4>
+                    <ul>
+                        <li><a href="https://github.com/kisalnelaka" target="_blank" rel="noopener">GitHub Profile</a></li>
+                        <li><a href="https://linkedin.com/in/kisalnelaka" target="_blank" rel="noopener">LinkedIn</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>MIT License. Built by <a href="https://github.com/kisalnelaka" target="_blank" rel="noopener">Kisal Nelaka</a>.</span>
+                <div class="footer-social">
+                    <a href="https://github.com/kisalnelaka" target="_blank" rel="noopener" aria-label="GitHub">GitHub</a>
+                    <a href="https://linkedin.com/in/kisalnelaka" target="_blank" rel="noopener" aria-label="LinkedIn">LinkedIn</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+</body>
+</html>

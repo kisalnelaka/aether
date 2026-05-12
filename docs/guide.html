@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial - AETHER Framework</title>
+    <meta name="description" content="Step-by-step guide to building a complete REST API with the AETHER PHP framework.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .step { counter-increment: step-counter; margin-bottom: 3rem; }
+        .step-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+        .step-number {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: var(--accent-subtle); border: 1px solid var(--border-accent);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; color: var(--accent); font-size: 0.9rem; flex-shrink: 0;
+        }
+        .step-header h3 { margin-bottom: 0; }
+        .guide-progress {
+            position: fixed; top: var(--header-height); left: 0; right: 0;
+            height: 3px; background: var(--bg-tertiary); z-index: 999;
+        }
+        .guide-progress-bar {
+            height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+            width: 0%; transition: width 100ms ease;
+        }
+        .try-it {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: var(--radius-md); padding: 1.25rem 1.5rem;
+            margin: 1rem 0 1.5rem; font-size: 0.9rem;
+        }
+        .try-it strong { color: var(--accent); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; }
+    </style>
+</head>
+<body>
+    <div class="guide-progress"><div class="guide-progress-bar" id="progress-bar"></div></div>
+
+    <header class="header">
+        <div class="header-inner">
+            <a href="index.html" class="header-logo"><span class="logo-mark">A</span> AETHER</a>
+            <nav class="header-nav" id="main-nav">
+                <a href="index.html#features">Features</a>
+                <a href="documentation.html">Docs</a>
+                <a href="guide.html" class="active">Guide</a>
+            </nav>
+            <div class="header-actions">
+                <a href="https://github.com/kisalnelaka/aether" class="btn btn-ghost" target="_blank" rel="noopener">GitHub</a>
+                <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle menu">&#9776;</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="docs-layout">
+            <aside class="docs-sidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Tutorial Steps</div>
+                    <ul class="sidebar-nav">
+                        <li><a href="#step-1" class="active">1. Project Setup</a></li>
+                        <li><a href="#step-2">2. Configuration</a></li>
+                        <li><a href="#step-3">3. Data Service</a></li>
+                        <li><a href="#step-4">4. Middleware</a></li>
+                        <li><a href="#step-5">5. Controller</a></li>
+                        <li><a href="#step-6">6. Entry Point</a></li>
+                        <li><a href="#step-7">7. Run and Test</a></li>
+                        <li><a href="#step-8">8. AOT Compilation</a></li>
+                        <li><a href="#step-9">9. Route Groups</a></li>
+                        <li><a href="#next-steps">Next Steps</a></li>
+                    </ul>
+                </div>
+            </aside>
+
+            <main class="docs-content">
+                <h1>Build an API</h1>
+                <p>I'm going to show you how to build a simple CRUD API. I assume you know how to write PHP. The whole app is under 200 lines.</p>
+
+                <div class="callout callout-info">
+                    <strong>Note:</strong> You need PHP 8.3+. Nothing else.
+                </div>
+
+                <!-- STEP 1 -->
+                <section id="step-1" class="step">
+                    <div class="step-header"><div class="step-number">1</div><h3>Project Setup</h3></div>
+                    <p>Clone the framework and make your folders. Stop using package managers for everything.</p>
+<pre><code>git clone https://github.com/kisalnelaka/aether.git taskapi
+cd taskapi
+mkdir -p app/Controllers app/Middleware app/Services</code></pre>
+                </section>
+
+                <!-- STEP 2 -->
+                <section id="step-2" class="step">
+                    <div class="step-header"><div class="step-number">2</div><h3>Configuration</h3></div>
+                    <p>Edit <code>config/aether.php</code> to register your scan paths:</p>
+<pre><code><span class="token-keyword">return</span> [
+    <span class="token-string">'name'</span> => <span class="token-string">'Task API'</span>,
+    <span class="token-string">'debug'</span> => <span class="token-keyword">true</span>,
+    <span class="token-string">'controllers'</span> => [
+        <span class="token-string">'App\\Controllers'</span> => <span class="token-variable">__DIR__</span> . <span class="token-string">'/../app/Controllers'</span>,
+    ],
+    <span class="token-string">'services'</span> => [
+        <span class="token-string">'App\\Services'</span> => <span class="token-variable">__DIR__</span> . <span class="token-string">'/../app/Services'</span>,
+    ],
+];</code></pre>
+                </section>
+
+                <!-- STEP 3 -->
+                <section id="step-3" class="step">
+                    <div class="step-header"><div class="step-number">3</div><h3>Create the Data Service</h3></div>
+                    <p>Create <code>app/Services/TaskService.php</code>. We're keeping it in memory. I don't want to explain how to install a database.</p>
+<pre><code><span class="token-attr">#[Persistent]</span>
+<span class="token-keyword">final class</span> <span class="token-type">TaskService</span>
+{
+    <span class="token-keyword">private array</span> <span class="token-variable">$tasks</span> = [];
+    <span class="token-keyword">private int</span> <span class="token-variable">$nextId</span> = <span class="token-number">1</span>;
+
+    <span class="token-keyword">public function</span> <span class="token-function">findAll</span>(): <span class="token-keyword">array</span>
+    {
+        <span class="token-keyword">return</span> <span class="token-function">array_values</span>(<span class="token-variable">$this</span>-><span class="token-variable">tasks</span>);
+    }
+
+    <span class="token-keyword">public function</span> <span class="token-function">create</span>(<span class="token-keyword">string</span> <span class="token-variable">$title</span>): <span class="token-keyword">array</span>
+    {
+        <span class="token-variable">$task</span> = [
+            <span class="token-string">'id'</span> => <span class="token-variable">$this</span>-><span class="token-variable">nextId</span>++,
+            <span class="token-string">'title'</span> => <span class="token-variable">$title</span>,
+            <span class="token-string">'completed'</span> => <span class="token-keyword">false</span>,
+        ];
+        <span class="token-variable">$this</span>-><span class="token-variable">tasks</span>[<span class="token-variable">$task</span>[<span class="token-string">'id'</span>]] = <span class="token-variable">$task</span>;
+        <span class="token-keyword">return</span> <span class="token-variable">$task</span>;
+    }
+}</code></pre>
+                </section>
+
+                <!-- STEP 4 -->
+                <section id="step-4" class="step">
+                    <div class="step-header"><div class="step-number">4</div><h3>Create Middleware</h3></div>
+                    <p>Create <code>app/Middleware/JsonMiddleware.php</code> that adds timing and content-type headers:</p>
+<pre><code><span class="token-keyword">final class</span> <span class="token-type">JsonMiddleware</span> <span class="token-keyword">implements</span> <span class="token-type">MiddlewareInterface</span>
+{
+    <span class="token-keyword">public function</span> <span class="token-function">handle</span>(<span class="token-type">Request</span> <span class="token-variable">$request</span>, <span class="token-keyword">callable</span> <span class="token-variable">$next</span>): <span class="token-type">Response</span>
+    {
+        <span class="token-variable">$start</span> = <span class="token-function">hrtime</span>(<span class="token-keyword">true</span>);
+        <span class="token-variable">$response</span> = <span class="token-variable">$next</span>(<span class="token-variable">$request</span>);
+        <span class="token-variable">$ms</span> = (<span class="token-function">hrtime</span>(<span class="token-keyword">true</span>) - <span class="token-variable">$start</span>) / <span class="token-number">1_000_000</span>;
+
+        <span class="token-keyword">return</span> <span class="token-variable">$response</span>
+            -><span class="token-function">withHeader</span>(<span class="token-string">'Content-Type'</span>, <span class="token-string">'application/json'</span>)
+            -><span class="token-function">withHeader</span>(<span class="token-string">'X-Response-Time'</span>, <span class="token-function">round</span>(<span class="token-variable">$ms</span>, <span class="token-number">3</span>) . <span class="token-string">'ms'</span>);
+    }
+}</code></pre>
+                </section>
+
+                <!-- STEP 5 -->
+                <section id="step-5" class="step">
+                    <div class="step-header"><div class="step-number">5</div><h3>Create the Controller</h3></div>
+                    <p>Create <code>app/Controllers/TaskController.php</code> with full CRUD:</p>
+<pre><code><span class="token-attr">#[Controller(prefix: '/api/tasks')]</span>
+<span class="token-keyword">final class</span> <span class="token-type">TaskController</span>
+{
+    <span class="token-keyword">public function</span> <span class="token-function">__construct</span>(
+        <span class="token-keyword">private</span> <span class="token-type">TaskService</span> <span class="token-variable">$tasks</span>,
+    ) {}
+
+    <span class="token-attr">#[Get(path: '/')]</span>
+    <span class="token-keyword">public function</span> <span class="token-function">index</span>(<span class="token-type">Request</span> <span class="token-variable">$r</span>): <span class="token-type">Response</span>
+    {
+        <span class="token-keyword">return</span> <span class="token-type">Response</span>::<span class="token-function">json</span>([<span class="token-string">'data'</span> => <span class="token-variable">$this</span>-><span class="token-variable">tasks</span>-><span class="token-function">findAll</span>()]);
+    }
+
+    <span class="token-attr">#[Post(path: '/')]</span>
+    <span class="token-keyword">public function</span> <span class="token-function">create</span>(<span class="token-type">Request</span> <span class="token-variable">$r</span>): <span class="token-type">Response</span>
+    {
+        <span class="token-variable">$body</span> = <span class="token-variable">$r</span>-><span class="token-function">json</span>();
+        <span class="token-variable">$task</span> = <span class="token-variable">$this</span>-><span class="token-variable">tasks</span>-><span class="token-function">create</span>(<span class="token-variable">$body</span>[<span class="token-string">'title'</span>] ?? <span class="token-string">''</span>);
+        <span class="token-keyword">return</span> <span class="token-type">Response</span>::<span class="token-function">json</span>([<span class="token-string">'data'</span> => <span class="token-variable">$task</span>], <span class="token-number">201</span>);
+    }
+
+    <span class="token-attr">#[Delete(path: '/{id}')]</span>
+    <span class="token-keyword">public function</span> <span class="token-function">destroy</span>(<span class="token-type">Request</span> <span class="token-variable">$r</span>): <span class="token-type">Response</span>
+    {
+        <span class="token-variable">$id</span> = (<span class="token-keyword">int</span>)<span class="token-variable">$r</span>-><span class="token-function">getRouteParam</span>(<span class="token-string">'id'</span>);
+        <span class="token-variable">$this</span>-><span class="token-variable">tasks</span>-><span class="token-function">delete</span>(<span class="token-variable">$id</span>);
+        <span class="token-keyword">return</span> <span class="token-type">Response</span>::<span class="token-function">json</span>([<span class="token-string">'message'</span> => <span class="token-string">'Deleted'</span>]);
+    }
+}</code></pre>
+                </section>
+
+                <!-- STEP 6 -->
+                <section id="step-6" class="step">
+                    <div class="step-header"><div class="step-number">6</div><h3>Create the Entry Point</h3></div>
+                    <p>Create <code>public/index.php</code>:</p>
+<pre><code><span class="token-keyword">require_once</span> <span class="token-variable">__DIR__</span> . <span class="token-string">'/../aether.php'</span>;
+
+<span class="token-variable">$app</span> = <span class="token-type">Application</span>::<span class="token-function">create</span>(<span class="token-variable">AETHER_ROOT</span>);
+<span class="token-variable">$app</span>-><span class="token-function">middleware</span>(<span class="token-type">JsonMiddleware</span>::<span class="token-keyword">class</span>);
+
+<span class="token-variable">$app</span>-><span class="token-function">get</span>(<span class="token-string">'/api/tasks'</span>, <span class="token-string">'TaskController@index'</span>);
+<span class="token-variable">$app</span>-><span class="token-function">post</span>(<span class="token-string">'/api/tasks'</span>, <span class="token-string">'TaskController@create'</span>);
+<span class="token-variable">$app</span>-><span class="token-function">delete</span>(<span class="token-string">'/api/tasks/{id}'</span>, <span class="token-string">'TaskController@destroy'</span>);
+
+<span class="token-variable">$app</span>-><span class="token-function">run</span>();</code></pre>
+                </section>
+
+                <!-- STEP 7 -->
+                <section id="step-7" class="step">
+                    <div class="step-header"><div class="step-number">7</div><h3>Run and Test</h3></div>
+<pre><code>php -S localhost:8080 public/index.php</code></pre>
+                    <div class="try-it">
+                        <strong>Try it</strong>
+                        <p style="margin-top: 0.5rem; margin-bottom: 0;">Open a new terminal and run these commands:</p>
+                    </div>
+<pre><code><span class="token-comment"># List tasks</span>
+curl http://localhost:8080/api/tasks
+
+<span class="token-comment"># Create a task</span>
+curl -X POST http://localhost:8080/api/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"title": "Learn AETHER"}'
+
+<span class="token-comment"># Delete a task</span>
+curl -X DELETE http://localhost:8080/api/tasks/1</code></pre>
+                </section>
+
+                <!-- STEP 8 -->
+                <section id="step-8" class="step">
+                    <div class="step-header"><div class="step-number">8</div><h3>AOT Compilation</h3></div>
+                    <p>If you put this in production without compiling, it's your own fault when it's slow.</p>
+<pre><code>php bin/aether aot:compile</code></pre>
+                    <p>This generates three files in <code>cache/</code>:</p>
+                    <ul>
+                        <li><code>compiled_routes.php</code> -- serialized Radix Tree</li>
+                        <li><code>compiled_hydrators.php</code> -- static DI factory functions</li>
+                        <li><code>compiled_classmap.php</code> -- optimized autoloader map</li>
+                    </ul>
+                    <p>The Kernel loads these files automatically instead of scanning your attributes with Reflection.</p>
+                </section>
+
+                <!-- STEP 9 -->
+                <section id="step-9" class="step">
+                    <div class="step-header"><div class="step-number">9</div><h3>Route Groups</h3></div>
+                    <p>Organize versioned APIs with groups:</p>
+<pre><code><span class="token-variable">$app</span>-><span class="token-function">group</span>(<span class="token-string">'/api/v2'</span>, <span class="token-keyword">function</span> (<span class="token-variable">$r</span>) {
+    <span class="token-variable">$r</span>-><span class="token-function">get</span>(<span class="token-string">'/tasks'</span>, <span class="token-string">'TaskController@index'</span>);
+    <span class="token-variable">$r</span>-><span class="token-function">post</span>(<span class="token-string">'/tasks'</span>, <span class="token-string">'TaskController@create'</span>);
+}, <span class="token-attr">middleware</span>: [<span class="token-string">'AuthMiddleware'</span>]);</code></pre>
+                </section>
+
+                <!-- NEXT STEPS -->
+                <section id="next-steps">
+                    <h2>Next Steps</h2>
+                    <ul>
+                        <li>Read the full <a href="documentation.html">documentation</a></li>
+                        <li>Explore the <a href="documentation.html#fibers">Fiber async I/O</a> for concurrent database queries</li>
+                        <li>Set up <a href="documentation.html#workers">persistent workers</a> for production</li>
+                        <li>Browse the <a href="https://github.com/kisalnelaka/aether" target="_blank" rel="noopener">source code on GitHub</a></li>
+                    </ul>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <span>MIT License. Built by <a href="https://github.com/kisalnelaka" target="_blank" rel="noopener">Kisal Nelaka</a>.</span>
+                <div class="footer-social">
+                    <a href="https://github.com/kisalnelaka" target="_blank" rel="noopener">GitHub</a>
+                    <a href="https://linkedin.com/in/kisalnelaka" target="_blank" rel="noopener">LinkedIn</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script>
+        // Reading progress bar
+        window.addEventListener('scroll', function () {
+            var bar = document.getElementById('progress-bar');
+            if (!bar) return;
+            var docH = document.documentElement.scrollHeight - window.innerHeight;
+            var pct = docH > 0 ? (window.scrollY / docH) * 100 : 0;
+            bar.style.width = Math.min(pct, 100) + '%';
+        });
+    </script>
+</body>
+</html>

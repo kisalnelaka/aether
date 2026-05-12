@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation - AETHER Framework</title>
+    <meta name="description" content="Complete documentation for the AETHER PHP framework covering routing, dependency injection, fibers, AOT compilation, and the CLI.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="header">
+        <div class="header-inner">
+            <a href="index.html" class="header-logo"><span class="logo-mark">A</span> AETHER</a>
+            <nav class="header-nav" id="main-nav">
+                <a href="index.html#features">Features</a>
+                <a href="documentation.html" class="active">Docs</a>
+                <a href="guide.html">Guide</a>
+            </nav>
+            <div class="header-actions">
+                <a href="https://github.com/kisalnelaka/aether" class="btn btn-ghost" target="_blank" rel="noopener">GitHub</a>
+                <a href="guide.html" class="btn btn-primary">Get Started</a>
+                <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle menu">&#9776;</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="docs-layout">
+            <aside class="docs-sidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Getting Started</div>
+                    <ul class="sidebar-nav">
+                        <li><a href="#overview" class="active">Overview</a></li>
+                        <li><a href="#installation">Installation</a></li>
+                        <li><a href="#quickstart">Quick Start</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Core</div>
+                    <ul class="sidebar-nav">
+                        <li><a href="#architecture">Architecture</a></li>
+                        <li><a href="#routing">Routing</a></li>
+                        <li><a href="#container">Container</a></li>
+                        <li><a href="#http">HTTP Layer</a></li>
+                        <li><a href="#middleware">Middleware</a></li>
+                    </ul>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-title">Advanced</div>
+                    <ul class="sidebar-nav">
+                        <li><a href="#fibers">Fibers</a></li>
+                        <li><a href="#aot">AOT Compiler</a></li>
+                        <li><a href="#workers">Workers</a></li>
+                        <li><a href="#cache">Shared Cache</a></li>
+                        <li><a href="#cli">CLI Reference</a></li>
+                    </ul>
+                </div>
+            </aside>
+
+            <main class="docs-content">
+
+                <!-- OVERVIEW -->
+                <section id="overview">
+                    <h1>Documentation</h1>
+                    <p>AETHER is a PHP 8.3 framework. It runs in persistent memory, uses Fibers, and doesn't rely on Composer. It's fast and small. Read this before opening an issue.</p>
+
+                    <table>
+                        <thead><tr><th>Property</th><th>Value</th></tr></thead>
+                        <tbody>
+                            <tr><td>PHP Version</td><td>8.3+</td></tr>
+                            <tr><td>Core Size</td><td>Under 180KB</td></tr>
+                            <tr><td>Dependencies</td><td>None</td></tr>
+                            <tr><td>Routing</td><td>Radix Tree, O(K)</td></tr>
+                            <tr><td>Concurrency</td><td>PHP Fibers</td></tr>
+                            <tr><td>Runtime Reflection</td><td>None (AOT)</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- INSTALLATION -->
+                <section id="installation">
+                    <h2>Installation</h2>
+                    <p>Just clone it. We don't use Composer here.</p>
+<pre><code>git clone https://github.com/kisalnelaka/aether.git myapp
+cd myapp</code></pre>
+                    <p>The autoloader handles everything. You don't need `vendor/autoload.php`.</p>
+                </section>
+
+                <!-- QUICK START -->
+                <section id="quickstart">
+                    <h2>Quick Start</h2>
+                    <p>Create a file. Register a route. Run it. It's not complicated.</p>
+<pre><code><span class="token-keyword">&lt;?php</span>
+<span class="token-keyword">declare</span>(<span class="token-function">strict_types</span>: <span class="token-number">1</span>);
+<span class="token-keyword">require_once</span> <span class="token-variable">__DIR__</span> . <span class="token-string">'/aether.php'</span>;
+
+<span class="token-keyword">use</span> <span class="token-type">Aether\Kernel\Application</span>;
+
+<span class="token-variable">$app</span> = <span class="token-type">Application</span>::<span class="token-function">create</span>(<span class="token-variable">__DIR__</span>);
+<span class="token-variable">$app</span>-><span class="token-function">get</span>(<span class="token-string">'/'</span>, <span class="token-string">'HomeController@index'</span>);
+<span class="token-variable">$app</span>-><span class="token-function">run</span>();</code></pre>
+                    <p>Start the built-in PHP server:</p>
+<pre><code>php -S localhost:8080 index.php</code></pre>
+                </section>
+
+                <!-- ARCHITECTURE -->
+                <section id="architecture">
+                    <h2>Architecture</h2>
+                    <p>Normal PHP is wasteful. It boots, runs, and dies. AETHER boots once and stays alive.</p>
+                    <table>
+                        <thead><tr><th>Module</th><th>Responsibility</th><th>Key Classes</th></tr></thead>
+                        <tbody>
+                            <tr><td>Alpha</td><td>Persistent Execution Engine</td><td>WorkerManager, Container, SharedMemoryCache</td></tr>
+                            <tr><td>Beta</td><td>Radix Tree Router</td><td>RadixTree, Router, RouteCompiler</td></tr>
+                            <tr><td>Gamma</td><td>Fiber Async I/O</td><td>Scheduler, Deferred, AsyncDatabase, AsyncHttpClient</td></tr>
+                            <tr><td>Delta</td><td>Zero-Reflection Schema</td><td>RouteScanner, HydratorGenerator, Compiler</td></tr>
+                        </tbody>
+                    </table>
+
+                    <h3>Request Lifecycle</h3>
+                    <ol>
+                        <li>Worker receives raw HTTP data</li>
+                        <li>Immutable Request object is created</li>
+                        <li>Router matches the path via the Radix Tree</li>
+                        <li>Route parameters are injected into the Request</li>
+                        <li>Global middleware pipeline executes</li>
+                        <li>Route-specific middleware executes</li>
+                        <li>Controller method is invoked</li>
+                        <li>Response is returned up the pipeline</li>
+                        <li>Response is sent to the client</li>
+                        <li>Ephemeral services are reset</li>
+                    </ol>
+
+                    <h3>Memory Model</h3>
+                    <table>
+                        <thead><tr><th>Scope</th><th>Lifetime</th><th>Examples</th></tr></thead>
+                        <tbody>
+                            <tr><td>Persistent</td><td>Entire worker process</td><td>DB pool, config, compiled routes</td></tr>
+                            <tr><td>Ephemeral</td><td>Single request</td><td>Request data, auth context</td></tr>
+                            <tr><td>Transient</td><td>Single resolve call</td><td>DTOs, value objects</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- ROUTING -->
+                <section id="routing">
+                    <h2>Routing</h2>
+                    <p>Regex routers are slow. I built a radix tree. Matching is O(K) where K is segment count. It's fast.</p>
+
+                    <h3>Defining Routes</h3>
+<pre><code><span class="token-comment">// Manual registration</span>
+<span class="token-variable">$app</span>-><span class="token-function">get</span>(<span class="token-string">'/users'</span>, <span class="token-string">'UserController@index'</span>);
+<span class="token-variable">$app</span>-><span class="token-function">post</span>(<span class="token-string">'/users'</span>, <span class="token-string">'UserController@store'</span>);
+<span class="token-variable">$app</span>-><span class="token-function">put</span>(<span class="token-string">'/users/{id}'</span>, <span class="token-string">'UserController@update'</span>);
+<span class="token-variable">$app</span>-><span class="token-function">delete</span>(<span class="token-string">'/users/{id}'</span>, <span class="token-string">'UserController@destroy'</span>);</code></pre>
+
+                    <h3>Attribute-Based Routing</h3>
+<pre><code><span class="token-attr">#[Controller(prefix: '/api')]</span>
+<span class="token-keyword">final class</span> <span class="token-type">UserController</span>
+{
+    <span class="token-attr">#[Get(path: '/users/{id}', name: 'users.show')]</span>
+    <span class="token-keyword">public function</span> <span class="token-function">show</span>(<span class="token-type">Request</span> <span class="token-variable">$r</span>): <span class="token-type">Response</span> { <span class="token-comment">/* ... */</span> }
+}</code></pre>
+                    <p>Available attributes: <code>#[Get]</code>, <code>#[Post]</code>, <code>#[Put]</code>, <code>#[Delete]</code>, <code>#[Patch]</code>, <code>#[Route]</code>.</p>
+
+                    <h3>Dynamic Parameters</h3>
+                    <p>Use <code>{name}</code> syntax. Access via <code>$request->getRouteParam('name')</code>.</p>
+
+                    <h3>Wildcard Catch-All</h3>
+                    <p>Use <code>{name*}</code> to capture the remainder of the path:</p>
+<pre><code><span class="token-variable">$app</span>-><span class="token-function">get</span>(<span class="token-string">'/files/{path*}'</span>, <span class="token-string">'FileController@serve'</span>);
+<span class="token-comment">// /files/docs/readme.md  =>  path = "docs/readme.md"</span></code></pre>
+
+                    <h3>Route Groups</h3>
+<pre><code><span class="token-variable">$app</span>-><span class="token-function">group</span>(<span class="token-string">'/admin'</span>, <span class="token-keyword">function</span> (<span class="token-variable">$r</span>) {
+    <span class="token-variable">$r</span>-><span class="token-function">get</span>(<span class="token-string">'/dashboard'</span>, <span class="token-string">'AdminController@dash'</span>);
+}, <span class="token-attr">middleware</span>: [<span class="token-string">'AuthMiddleware'</span>]);</code></pre>
+
+                    <h3>Named Routes and URL Generation</h3>
+<pre><code><span class="token-variable">$url</span> = <span class="token-variable">$app</span>-><span class="token-function">getRouter</span>()-><span class="token-function">url</span>(<span class="token-string">'users.show'</span>, [<span class="token-string">'id'</span> => <span class="token-string">'42'</span>]);
+<span class="token-comment">// Result: "/users/42"</span></code></pre>
+
+                    <h3>Matching Priority</h3>
+                    <ol>
+                        <li>Static segments (exact match) -- highest priority</li>
+                        <li>Dynamic parameters (<code>{id}</code>)</li>
+                        <li>Wildcard catch-all (<code>{path*}</code>) -- lowest priority</li>
+                    </ol>
+                </section>
+
+                <!-- CONTAINER -->
+                <section id="container">
+                    <h2>Dependency Injection Container</h2>
+                    <p>The standard PHP container model is broken for long running apps. This container forces you to use scopes so you don't leak memory.</p>
+
+                    <h3>Registration</h3>
+<pre><code><span class="token-comment">// Persistent: created once, survives across requests</span>
+<span class="token-variable">$container</span>-><span class="token-function">persistent</span>(<span class="token-type">DbPool</span>::<span class="token-keyword">class</span>, <span class="token-keyword">fn</span>() => <span class="token-keyword">new</span> <span class="token-type">DbPool</span>());
+
+<span class="token-comment">// Ephemeral: recreated per request</span>
+<span class="token-variable">$container</span>-><span class="token-function">ephemeral</span>(<span class="token-type">AuthContext</span>::<span class="token-keyword">class</span>, <span class="token-keyword">fn</span>(<span class="token-variable">$c</span>) => <span class="token-keyword">new</span> <span class="token-type">AuthContext</span>(<span class="token-variable">$c</span>-><span class="token-function">resolve</span>(<span class="token-type">Request</span>::<span class="token-keyword">class</span>)));
+
+<span class="token-comment">// Transient: new instance every resolve</span>
+<span class="token-variable">$container</span>-><span class="token-function">transient</span>(<span class="token-type">Validator</span>::<span class="token-keyword">class</span>);
+
+<span class="token-comment">// Instance: pre-built object</span>
+<span class="token-variable">$container</span>-><span class="token-function">instance</span>(<span class="token-type">Config</span>::<span class="token-keyword">class</span>, <span class="token-keyword">new</span> <span class="token-type">Config</span>([...]));
+
+<span class="token-comment">// Alias: interface to concrete</span>
+<span class="token-variable">$container</span>-><span class="token-function">alias</span>(<span class="token-type">LoggerInterface</span>::<span class="token-keyword">class</span>, <span class="token-type">FileLogger</span>::<span class="token-keyword">class</span>);</code></pre>
+
+                    <h3>Resolution</h3>
+<pre><code><span class="token-variable">$service</span> = <span class="token-variable">$container</span>-><span class="token-function">resolve</span>(<span class="token-type">UserService</span>::<span class="token-keyword">class</span>);</code></pre>
+
+                    <h3>Circular Dependency Detection</h3>
+                    <p>If A needs B and B needs A, the container throws an error. Fix your architecture instead of relying on magic resolvers.</p>
+
+                    <h3>Ephemeral Reset</h3>
+                    <p>The Kernel calls <code>$container->resetEphemerals()</code> at the end of each request cycle, destroying all per-request services to prevent state leakage.</p>
+                </section>
+
+                <!-- HTTP -->
+                <section id="http">
+                    <h2>HTTP Layer</h2>
+                    <h3>Request</h3>
+                    <p>The Request is immutable and built from raw data. Don't use superglobals.</p>
+<pre><code><span class="token-variable">$method</span> = <span class="token-variable">$request</span>-><span class="token-function">getMethod</span>();
+<span class="token-variable">$path</span>   = <span class="token-variable">$request</span>-><span class="token-function">getPath</span>();
+<span class="token-variable">$body</span>   = <span class="token-variable">$request</span>-><span class="token-function">json</span>();
+<span class="token-variable">$param</span>  = <span class="token-variable">$request</span>-><span class="token-function">getRouteParam</span>(<span class="token-string">'id'</span>);
+<span class="token-variable">$header</span> = <span class="token-variable">$request</span>-><span class="token-function">getHeader</span>(<span class="token-string">'Authorization'</span>);
+<span class="token-variable">$query</span>  = <span class="token-variable">$request</span>-><span class="token-function">getQuery</span>(<span class="token-string">'page'</span>, <span class="token-string">'1'</span>);</code></pre>
+
+                    <h3>Response</h3>
+<pre><code><span class="token-type">Response</span>::<span class="token-function">json</span>([<span class="token-string">'data'</span> => <span class="token-variable">$items</span>]);
+<span class="token-type">Response</span>::<span class="token-function">json</span>([<span class="token-string">'error'</span> => <span class="token-string">'Not found'</span>], <span class="token-number">404</span>);
+<span class="token-type">Response</span>::<span class="token-function">html</span>(<span class="token-string">'&lt;h1&gt;Hello&lt;/h1&gt;'</span>);
+<span class="token-type">Response</span>::<span class="token-function">redirect</span>(<span class="token-string">'/login'</span>);
+<span class="token-type">Response</span>::<span class="token-function">noContent</span>();</code></pre>
+                </section>
+
+                <!-- MIDDLEWARE -->
+                <section id="middleware">
+                    <h2>Middleware</h2>
+                    <p>Middleware implements the <code>MiddlewareInterface</code> with a single <code>handle</code> method:</p>
+<pre><code><span class="token-keyword">final class</span> <span class="token-type">CorsMiddleware</span> <span class="token-keyword">implements</span> <span class="token-type">MiddlewareInterface</span>
+{
+    <span class="token-keyword">public function</span> <span class="token-function">handle</span>(<span class="token-type">Request</span> <span class="token-variable">$req</span>, <span class="token-keyword">callable</span> <span class="token-variable">$next</span>): <span class="token-type">Response</span>
+    {
+        <span class="token-variable">$response</span> = <span class="token-variable">$next</span>(<span class="token-variable">$req</span>);
+        <span class="token-keyword">return</span> <span class="token-variable">$response</span>
+            -><span class="token-function">withHeader</span>(<span class="token-string">'Access-Control-Allow-Origin'</span>, <span class="token-string">'*'</span>);
+    }
+}</code></pre>
+                    <p>Register globally or per-route:</p>
+<pre><code><span class="token-variable">$app</span>-><span class="token-function">middleware</span>(<span class="token-type">CorsMiddleware</span>::<span class="token-keyword">class</span>); <span class="token-comment">// global</span></code></pre>
+                </section>
+
+                <!-- FIBERS -->
+                <section id="fibers">
+                    <h2>Fibers</h2>
+                    <p>We use PHP 8.1 Fibers. They let us do non-blocking I/O without the callback hell.</p>
+
+                    <h3>Scheduler</h3>
+<pre><code><span class="token-variable">$scheduler</span> = <span class="token-keyword">new</span> <span class="token-type">Scheduler</span>();
+<span class="token-variable">$deferred</span> = <span class="token-variable">$scheduler</span>-><span class="token-function">defer</span>(<span class="token-keyword">function</span> () {
+    <span class="token-keyword">return</span> <span class="token-string">"Result from fiber"</span>;
+});
+<span class="token-variable">$scheduler</span>-><span class="token-function">run</span>();
+<span class="token-variable">$result</span> = <span class="token-variable">$deferred</span>-><span class="token-function">await</span>();</code></pre>
+
+                    <h3>Async Database</h3>
+<pre><code><span class="token-variable">$db</span> = <span class="token-keyword">new</span> <span class="token-type">AsyncDatabase</span>(<span class="token-variable">$scheduler</span>, [
+    <span class="token-string">'driver'</span> => <span class="token-string">'mysql'</span>,
+    <span class="token-string">'host'</span> => <span class="token-string">'127.0.0.1'</span>,
+    <span class="token-string">'database'</span> => <span class="token-string">'myapp'</span>,
+    <span class="token-string">'username'</span> => <span class="token-string">'root'</span>,
+]);
+
+<span class="token-variable">$users</span> = <span class="token-variable">$db</span>-><span class="token-function">query</span>(<span class="token-string">'SELECT * FROM users WHERE active = ?'</span>, [<span class="token-number">1</span>]);</code></pre>
+
+                    <h3>Async HTTP Client</h3>
+<pre><code><span class="token-variable">$http</span> = <span class="token-keyword">new</span> <span class="token-type">AsyncHttpClient</span>(<span class="token-variable">$scheduler</span>);
+<span class="token-variable">$resp</span> = <span class="token-variable">$http</span>-><span class="token-function">get</span>(<span class="token-string">'https://api.example.com/data'</span>);
+<span class="token-variable">$resp</span> = <span class="token-variable">$http</span>-><span class="token-function">postJson</span>(<span class="token-string">'https://api.example.com/hook'</span>, [<span class="token-string">'event'</span> => <span class="token-string">'test'</span>]);</code></pre>
+                </section>
+
+                <!-- AOT -->
+                <section id="aot">
+                    <h2>AOT Compiler</h2>
+                    <p>Reflection at runtime is stupid. The AOT compiler scans your code during build and dumps plain PHP arrays.</p>
+
+                    <h3>What Gets Compiled</h3>
+                    <table>
+                        <thead><tr><th>Input</th><th>Output</th></tr></thead>
+                        <tbody>
+                            <tr><td>#[Route] attributes</td><td>compiled_routes.php (Radix Tree array)</td></tr>
+                            <tr><td>#[Inject] attributes</td><td>compiled_hydrators.php (static factories)</td></tr>
+                            <tr><td>All PHP classes</td><td>compiled_classmap.php (autoloader map)</td></tr>
+                        </tbody>
+                    </table>
+                    <h3>Usage</h3>
+<pre><code>php bin/aether aot:compile</code></pre>
+                    <p>Configure scan paths in <code>config/aether.php</code>:</p>
+<pre><code><span class="token-string">'controllers'</span> => [
+    <span class="token-string">'App\\Controllers'</span> => <span class="token-variable">__DIR__</span> . <span class="token-string">'/../app/Controllers'</span>,
+],
+<span class="token-string">'services'</span> => [
+    <span class="token-string">'App\\Services'</span> => <span class="token-variable">__DIR__</span> . <span class="token-string">'/../app/Services'</span>,
+],</code></pre>
+                </section>
+
+                <!-- WORKERS -->
+                <section id="workers">
+                    <h2>Worker Manager</h2>
+                    <p>Workers boot the framework once and handle thousands of requests. Don't use `php -S` in production.</p>
+                    <h3>Configuration</h3>
+                    <table>
+                        <thead><tr><th>Setting</th><th>Default</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td>workers</td><td>4</td><td>Number of worker processes</td></tr>
+                            <tr><td>worker_mode</td><td>stdio</td><td>Protocol: stdio, roadrunner, socket</td></tr>
+                            <tr><td>max_requests</td><td>10000</td><td>Requests before worker recycle</td></tr>
+                        </tbody>
+                    </table>
+                    <h3>Signals</h3>
+                    <ul>
+                        <li><code>SIGTERM</code> / <code>SIGINT</code>: Graceful shutdown</li>
+                        <li><code>SIGUSR2</code>: Hot-reload (kill and respawn all workers)</li>
+                    </ul>
+                </section>
+
+                <!-- CACHE -->
+                <section id="cache">
+                    <h2>Shared Memory Cache</h2>
+                    <p>Workers share data via shmop. Don't hit the disk for everything.</p>
+<pre><code><span class="token-variable">$cache</span> = <span class="token-keyword">new</span> <span class="token-type">SharedMemoryCache</span>(<span class="token-attr">key</span>: <span class="token-number">0x4145</span>, <span class="token-attr">size</span>: <span class="token-number">1_048_576</span>);
+<span class="token-variable">$cache</span>-><span class="token-function">set</span>(<span class="token-string">'users:count'</span>, <span class="token-number">42</span>, <span class="token-attr">ttl</span>: <span class="token-number">300</span>);
+<span class="token-variable">$count</span> = <span class="token-variable">$cache</span>-><span class="token-function">get</span>(<span class="token-string">'users:count'</span>);</code></pre>
+                </section>
+
+                <!-- CLI -->
+                <section id="cli">
+                    <h2>CLI</h2>
+                    <p>It's a CLI tool. Use it.</p>
+                    <table>
+                        <thead><tr><th>Command</th><th>Description</th></tr></thead>
+                        <tbody>
+                            <tr><td><code>php bin/aether version</code></td><td>Show framework version and PHP info</td></tr>
+                            <tr><td><code>php bin/aether routes:compile</code></td><td>Compile route tree from attributes</td></tr>
+                            <tr><td><code>php bin/aether aot:compile</code></td><td>Full AOT compilation pipeline</td></tr>
+                            <tr><td><code>php bin/aether aot:clear</code></td><td>Clear all compiled cache files</td></tr>
+                            <tr><td><code>php bin/aether routes:list</code></td><td>List all registered routes</td></tr>
+                            <tr><td><code>php bin/aether container:diag</code></td><td>Container diagnostics</td></tr>
+                            <tr><td><code>php bin/aether serve</code></td><td>Start persistent worker server</td></tr>
+                        </tbody>
+                    </table>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-bottom">
+                <span>MIT License. Built by <a href="https://github.com/kisalnelaka" target="_blank" rel="noopener">Kisal Nelaka</a>.</span>
+                <div class="footer-social">
+                    <a href="https://github.com/kisalnelaka" target="_blank" rel="noopener">GitHub</a>
+                    <a href="https://linkedin.com/in/kisalnelaka" target="_blank" rel="noopener">LinkedIn</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script src="js/main.js"></script>
+</body>
+</html>

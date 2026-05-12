@@ -1,0 +1,215 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * AETHER CLI — Command-line interface for build tools and server management.
+ *
+ * Commands:
+ *   routes:compile    Compile routes from attributes into a static PHP file
+ *   aot:compile       Run the full AOT compilation pipeline
+ *   aot:clear         Clear all compiled cache files
+ *   serve             Start the worker manager
+ *   routes:list       List all registered routes
+ *   container:diag    Show container diagnostics
+ *   version           Show framework version
+ *
+ * Usage:
+ *   php bin/aether <command> [options]
+ */
+
+require_once dirname(__DIR__) . DIRECTORY_SEPARATOR . 'aether.php';
+
+use Aether\Kernel\Application;
+use Aether\AOT\Compiler;
+use Aether\AOT\RouteScanner;
+use Aether\Router\RouteCompiler;
+use Aether\Kernel\WorkerManager;
+
+// ── Parse command. If you can't type it right, that's on you. ──
+
+$args = array_slice($argv, 1);
+$command = $args[0] ?? 'help';
+
+// ── Configuration ──
+
+$configFile = AETHER_CONFIG . DIRECTORY_SEPARATOR . 'aether.php';
+$config = is_file($configFile) ? require $configFile : [];
+
+// ── Commands ──
+
+match ($command) {
+    'version' => printVersion(),
+    'help', '--help', '-h' => printHelp(),
+    'routes:compile' => compileRoutes($config),
+    'aot:compile' => aotCompile($config),
+    'aot:clear' => aotClear(),
+    'routes:list' => listRoutes($config),
+    'container:diag' => containerDiag(),
+    'serve' => startServer($config),
+    default => unknownCommand($command),
+};
+
+// ── Command Implementations ──
+
+function printVersion(): void
+{
+    echo "AETHER Framework v" . AETHER_VERSION . "\n";
+    echo "PHP " . PHP_VERSION . " | " . PHP_OS . "\n";
+}
+
+function printHelp(): void
+{
+    echo <<<HELP
+    ╔══════════════════════════════════════════════╗
+    ║          AETHER Framework CLI v1.0           ║
+    ╠══════════════════════════════════════════════╣
+    ║  Commands:                                   ║
+    ║                                              ║
+    ║  routes:compile  Compile route tree (AOT)    ║
+    ║  aot:compile     Full AOT compilation        ║
+    ║  aot:clear       Clear compiled cache        ║
+    ║  routes:list     List registered routes       ║
+    ║  container:diag  Container diagnostics       ║
+    ║  serve           Start worker server         ║
+    ║  version         Show version info           ║
+    ║  help            Show this help              ║
+    ╚══════════════════════════════════════════════╝
+
+    HELP;
+}
+
+function compileRoutes(array $config): void
+{
+    echo "[AETHER] Compiling routes...\n";
+
+    $controllerPaths = $config['controllers'] ?? [];
+    if (count($controllerPaths) === 0) {
+        echo "[ERROR] No controller paths configured in config/aether.php\n";
+        return;
+    }
+
+    $scanner = new RouteScanner();
+    $compiler = new RouteCompiler();
+    $tree = new \Aether\Router\RadixTree();
+
+    $total = 0;
+    foreach ($controllerPaths as $namespace => $directory) {
+        $routes = $scanner->scanDirectory($directory, $namespace);
+        foreach ($routes as $route) {
+            $tree->insert(
+                $route['method'], $route['path'], $route['handler'],
+                $route['controllerClass'], $route['controllerMethod'],
+                $route['middleware'], $route['name'] ?? '',
+            );
+        }
+        $total += count($routes);
+        echo "  Scanned {$namespace}: " . count($routes) . " routes\n";
+    }
+
+    $outputPath = AETHER_CACHE . DIRECTORY_SEPARATOR . 'compiled_routes.php';
+    $compiler->compile($tree, $outputPath);
+
+    echo "[OK] {$total} routes compiled to {$outputPath}\n";
+}
+
+function aotCompile(array $config): void
+{
+    echo "[AETHER] Running full AOT compilation...\n";
+    $start = hrtime(true);
+
+    $compiler = new Compiler();
+    $report = $compiler->compile(
+        $config['controllers'] ?? [],
+        $config['services'] ?? [],
+        AETHER_CACHE,
+    );
+
+    $timeMs = round($report['time_ms'], 2);
+    echo "Routes compiled. Don't touch the cache file.\n";
+    echo "  Hydrators generated: {$report['hydrators']}\n";
+    echo "  Class map entries:  {$report['classmap_entries']}\n";
+    echo "  Time:               {$timeMs}ms\n";
+    echo "\n  Files:\n";
+    foreach ($report['files_generated'] as $file) {
+        echo "    → {$file}\n";
+    }
+    echo "Container memory looks okay. But who knows what you did in your code.\n";
+    echo "AOT build done. Your app might actually be fast now.\n";
+}
+
+function aotClear(): void
+{
+    $compiler = new Compiler();
+    $compiler->clearCache(AETHER_CACHE);
+    echo "[OK] Compiled cache cleared.\n";
+}
+
+function listRoutes(array $config): void
+{
+    $compiledPath = AETHER_CACHE . DIRECTORY_SEPARATOR . 'compiled_routes.php';
+
+    if (is_file($compiledPath)) {
+        $compiler = new RouteCompiler();
+        $tree = $compiler->load($compiledPath);
+    } else {
+        echo "[INFO] No compiled routes found. Scanning source...\n";
+        $scanner = new RouteScanner();
+        $tree = new \Aether\Router\RadixTree();
+
+        foreach (($config['controllers'] ?? []) as $ns => $dir) {
+            $routes = $scanner->scanDirectory($dir, $ns);
+            foreach ($routes as $r) {
+                $tree->insert($r['method'], $r['path'], $r['handler'],
+                    $r['controllerClass'], $r['controllerMethod'],
+                    $r['middleware'], $r['name'] ?? '');
+            }
+        }
+    }
+
+    echo "\n  Registered Routes ({$tree->getRouteCount()}):\n";
+    echo "  " . str_repeat('─', 70) . "\n";
+    echo sprintf("  %-8s %-30s %-30s\n", 'METHOD', 'PATH', 'HANDLER');
+    echo "  " . str_repeat('─', 70) . "\n";
+
+    $named = $tree->getNamedRoutes();
+    foreach ($named as $name => $entry) {
+        echo sprintf("  %-8s %-30s %-30s\n", $entry->method, $entry->path, $entry->handler);
+    }
+
+    echo "\n";
+}
+
+function containerDiag(): void
+{
+    $container = \Aether\Container\Container::getInstance();
+    $diag = $container->diagnostics();
+
+    echo "\n  Container Diagnostics:\n";
+    echo "  " . str_repeat('─', 40) . "\n";
+    foreach ($diag as $key => $value) {
+        echo sprintf("  %-20s %s\n", $key . ':', (string)$value);
+    }
+    echo "\n";
+}
+
+function startServer(array $config): void
+{
+    echo "[AETHER] Starting server...\n";
+
+    $app = Application::create(AETHER_ROOT);
+    $app->configure($config);
+
+    $workers = (int)($config['workers'] ?? 4);
+    $mode = (string)($config['worker_mode'] ?? 'stdio');
+    $maxReq = (int)($config['max_requests'] ?? 10000);
+
+    $manager = new WorkerManager($app, $workers, $mode, $maxReq);
+    $manager->start();
+}
+
+function unknownCommand(string $cmd): void
+{
+    echo "[ERROR] Unknown command: {$cmd}\n";
+    echo "Run 'php bin/aether help' for available commands.\n";
+}

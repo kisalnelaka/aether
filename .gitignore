@@ -1,0 +1,25 @@
+# Compiled cache
+/cache/*.php
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+
+# Test artifacts
+.phpunit.result.cache
+coverage/
