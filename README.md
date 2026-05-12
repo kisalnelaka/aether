@@ -19,7 +19,7 @@ An honest comparison. No marketing fluff.
 
 | Framework | Language | Architecture | Pros | Cons |
 | :--- | :--- | :--- | :--- | :--- |
-| **AETHER** | PHP | Resident/AOT | < 250KB, 0.05ms boot, Fiber-concurrency, Zero deps. | Tiny ecosystem, no community plugins, requires PHP 8.3+. |
+| **AETHER** | PHP | Resident/AOT | 240KB, < 0.1ms boot, Fiber-concurrency, Zero deps. | Tiny ecosystem, no community plugins, requires PHP 8.3+. |
 | **Laravel** | PHP | Req/Resp | Massive ecosystem, incredible DX, Eloquent is powerful. | Heavy bloat (50MB+ vendor), slow boot (~20-50ms), Reflection-heavy. |
 | **Swoole** | PHP/C++ | Event Loop | Blazing fast, true async, supports Coroutines. | Requires C extension, non-standard PHP behavior, complex debugging. |
 | **Express** | JS | Event Loop | Simple, huge ecosystem, very flexible. | Middleware hell, callback/async soup, high memory for high load. |

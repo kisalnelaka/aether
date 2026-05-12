@@ -16,14 +16,8 @@ namespace Aether;
  */
 final class Autoloader
 {
-    /** @var string The namespace prefix (e.g. "Aether") */
-    private string $prefix;
-
-    /** @var int Cached length of the prefix string */
-    private int $prefixLength;
-
-    /** @var string Base directory for the namespace */
-    private string $baseDir;
+    /** @var array<string, string> Namespace => directory */
+    private array $prefixes = [];
 
     /** @var array<string, string> Optional pre-compiled class map */
     private array $classMap = [];
@@ -31,11 +25,24 @@ final class Autoloader
     /** @var array<string, true> Track loaded classes for diagnostics */
     private array $loaded = [];
 
-    public function __construct(string $prefix, string $baseDir)
+    private static ?self $instance = null;
+
+    public function __construct()
     {
-        $this->prefix = $prefix;
-        $this->prefixLength = strlen($prefix);
-        $this->baseDir = rtrim($baseDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        self::$instance = $this;
+    }
+
+    public static function getInstance(): self
+    {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
+    public function addNamespace(string $prefix, string $baseDir): void
+    {
+        $this->prefixes[$prefix] = rtrim($baseDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
     }
 
     /**
@@ -86,19 +93,18 @@ final class Autoloader
             }
         }
 
-        // Check prefix match using strpos (no regex)
-        if (strncmp($class, $this->prefix . '\\', $this->prefixLength + 1) !== 0) {
-            return false;
-        }
+        foreach ($this->prefixes as $prefix => $baseDir) {
+            $len = strlen($prefix);
+            if (strncmp($class, $prefix . '\\', $len + 1) === 0) {
+                $relativeClass = substr($class, $len + 1);
+                $file = $baseDir . str_replace('\\', DIRECTORY_SEPARATOR, $relativeClass) . '.php';
 
-        // Strip the prefix and convert namespace separators to directory separators
-        $relativeClass = substr($class, $this->prefixLength + 1);
-        $file = $this->baseDir . str_replace('\\', DIRECTORY_SEPARATOR, $relativeClass) . '.php';
-
-        if (is_file($file)) {
-            require $file;
-            $this->loaded[$class] = true;
-            return true;
+                if (is_file($file)) {
+                    require $file;
+                    $this->loaded[$class] = true;
+                    return true;
+                }
+            }
         }
 
         return false;

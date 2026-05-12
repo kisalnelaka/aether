@@ -28,5 +28,6 @@ if (PHP_VERSION_ID < 80300) {
 
 require_once AETHER_SRC . DIRECTORY_SEPARATOR . 'Autoloader.php';
 
-$autoloader = new \Aether\Autoloader('Aether', AETHER_SRC);
+$autoloader = \Aether\Autoloader::getInstance();
+$autoloader->addNamespace('Aether', AETHER_SRC);
 $autoloader->register();
