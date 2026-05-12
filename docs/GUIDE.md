@@ -1,66 +1,78 @@
-# Guide: Build an API
+# Guide: Build a Full-Stack App
 
-Look, I'm not going to hold your hand through this. We're building a simple CRUD API. I assume you know PHP. 
+Look, building a JSON API is trivial. You asked for a full web app from A-Z with UI frameworks. Fine. I'll walk you through building a complete, publishable web app. I'm going to show you how to wire up Tailwind CSS via CDN for speed, but the same logic applies if you use Vite, React, or whatever bloated frontend stack you prefer. 
 
-## 1. Setup
+I assume you know how to write PHP and HTML. If you don't, close this tab.
 
-Clone the repo. We aren't using Composer. 
+## 1. Directory Setup
+
+Clone the framework. Stop using Composer to download half the internet.
 
 ```bash
-git clone https://github.com/kisalnelaka/aether.git myapi
-cd myapi
-mkdir -p app/Controllers app/Middleware app/Services
+git clone https://github.com/kisalnelaka/aether.git mywebapp
+cd mywebapp
+mkdir -p app/Controllers app/Views public/assets
 ```
 
-## 2. Config
+## 2. Configuration
 
-Edit `config/aether.php`. Tell it where your files are.
+Tell the AOT compiler where your controllers are. Edit `config/aether.php`.
 
 ```php
 return [
     'controllers' => [
         'App\\Controllers' => __DIR__ . '/../app/Controllers',
     ],
-    'services' => [
-        'App\\Services' => __DIR__ . '/../app/Services',
-    ],
+    // Keep your views out of the compiler. They aren't classes.
 ];
 ```
 
-## 3. Data Service
+## 3. The View Engine (Keep it simple)
 
-We're putting it in memory for this example. Normally you'd hit a DB, but I don't want to explain how to install Postgres to you. 
+AETHER doesn't ship with a 50MB templating engine like Twig or Blade. PHP *is* a templating engine. We just need a helper function to render it.
 
-Create `app/Services/TaskService.php`. Mark it `#[Persistent]` so it survives the request cycle.
+Create `app/Views/layout.php`. We'll drop Tailwind CSS from a CDN here so you don't have to configure Node.js just to make a button blue. If you want to use Vite and React later, just point your `<script type="module" src="/assets/main.js"></script>` here and AETHER will serve it.
 
 ```php
-<?php
-declare(strict_types=1);
-
-namespace App\Services;
-use Aether\Attributes\Persistent;
-
-#[Persistent]
-final class TaskService
-{
-    private array $tasks = [];
-    private int $nextId = 1;
-
-    public function create(string $title): array
-    {
-        $task = ['id' => $this->nextId++, 'title' => $title];
-        $this->tasks[$task['id']] = $task;
-        return $task;
-    }
-
-    public function all(): array { return array_values($this->tasks); }
-    public function delete(int $id): void { unset($this->tasks[$id]); }
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title><?= htmlspecialchars($title ?? 'AETHER App') ?></title>
+    <!-- Put your UI framework here. Tailwind, Bootstrap, whatever. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-zinc-950 text-zinc-100 font-sans antialiased p-8">
+    <div class="max-w-2xl mx-auto">
+        <h1 class="text-3xl font-bold mb-6 tracking-tight text-white">AETHER Web App</h1>
+        <?= $content ?? '' ?>
+    </div>
+</body>
+</html>
 ```
 
-## 4. Controller
+Create `app/Views/home.php`:
 
-Create `app/Controllers/TaskController.php`. Inject the service. We use constructor injection. Property injection is an anti-pattern. 
+```php
+<div class="p-6 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl">
+    <h2 class="text-xl font-semibold mb-4 text-emerald-400">System Status</h2>
+    <p class="mb-2">Framework: <span class="text-zinc-400">AETHER</span></p>
+    <p class="mb-4">Time: <span class="text-zinc-400"><?= date('H:i:s') ?></span></p>
+    
+    <form action="/submit" method="POST" class="mt-6 flex gap-4">
+        <input type="text" name="message" placeholder="Type something..." 
+               class="flex-1 bg-zinc-950 border border-zinc-800 rounded px-4 py-2 focus:outline-none focus:border-emerald-500 text-white">
+        <button type="submit" 
+                class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded font-medium transition-colors">
+            Send
+        </button>
+    </form>
+</div>
+```
+
+## 4. The Controller
+
+We need a controller to serve the view and handle the form POST. Create `app/Controllers/WebController.php`.
 
 ```php
 <?php
@@ -71,42 +83,100 @@ namespace App\Controllers;
 use Aether\Attributes\Controller;
 use Aether\Attributes\Get;
 use Aether\Attributes\Post;
-use Aether\Attributes\Delete;
 use Aether\Http\Request;
 use Aether\Http\Response;
-use App\Services\TaskService;
 
-#[Controller(prefix: '/api/tasks')]
-final class TaskController
+#[Controller]
+final class WebController
 {
-    public function __construct(private TaskService $tasks) {}
+    /**
+     * Dumb view helper. Render the template into a string and return it.
+     */
+    private function view(string $view, array $data = []): string
+    {
+        extract($data);
+        ob_start();
+        require __DIR__ . '/../Views/' . $view . '.php';
+        $content = ob_get_clean();
+        
+        ob_start();
+        require __DIR__ . '/../Views/layout.php';
+        return ob_get_clean();
+    }
 
     #[Get(path: '/')]
     public function index(): Response
     {
-        return Response::json(['data' => $this->tasks->all()]);
+        return Response::html($this->view('home', ['title' => 'Home - AETHER']));
     }
 
-    #[Post(path: '/')]
-    public function create(Request $r): Response
+    #[Post(path: '/submit')]
+    public function handleForm(Request $request): Response
     {
-        $body = $r->json();
-        $task = $this->tasks->create($body['title'] ?? 'Untitled');
-        return Response::json(['data' => $task]);
-    }
-
-    #[Delete(path: '/{id}')]
-    public function destroy(Request $r): Response
-    {
-        $this->tasks->delete((int)$r->getRouteParam('id'));
-        return Response::json(['status' => 'gone']);
+        // Get the POST payload. It's raw input.
+        $body = file_get_contents('php://input');
+        parse_str($body, $post);
+        
+        $msg = $post['message'] ?? 'Nothing';
+        
+        // Return raw HTML or redirect. Your choice.
+        return Response::html(
+            $this->view('home', ['title' => 'Success', 'message' => "You sent: $msg"])
+        );
     }
 }
 ```
 
-## 5. Boot It
+## 5. Serving Static Files (Assets)
 
-Make `public/index.php`. 
+If you compile your frontend with Vite or React, you'll have CSS and JS files in `public/assets/`. AETHER routes can catch wildcards to serve them.
+
+Add this to `app/Controllers/AssetController.php`:
+
+```php
+<?php
+declare(strict_types=1);
+
+namespace App\Controllers;
+
+use Aether\Attributes\Controller;
+use Aether\Attributes\Get;
+use Aether\Http\Request;
+use Aether\Http\Response;
+
+#[Controller]
+final class AssetController
+{
+    #[Get(path: '/assets/{path*}')]
+    public function serve(Request $request): Response
+    {
+        $path = $request->getRouteParam('path');
+        $file = __DIR__ . '/../../public/assets/' . $path;
+
+        if (!is_file($file)) {
+            return Response::html('Not Found', 404);
+        }
+
+        $ext = pathinfo($file, PATHINFO_EXTENSION);
+        $mime = match($ext) {
+            'css' => 'text/css',
+            'js' => 'application/javascript',
+            'png' => 'image/png',
+            'svg' => 'image/svg+xml',
+            default => 'text/plain'
+        };
+
+        return (new Response())
+            ->withStatus(200)
+            ->withHeader('Content-Type', $mime)
+            ->withBody(file_get_contents($file));
+    }
+}
+```
+
+## 6. The Entry Point
+
+Create `public/index.php`. This boots the Kernel.
 
 ```php
 <?php
@@ -117,34 +187,25 @@ require_once __DIR__ . '/../aether.php';
 use Aether\Kernel\Application;
 
 $app = Application::create(AETHER_ROOT);
-
-// If you didn't compile routes, you register them here.
-$app->get('/api/tasks', 'App\\Controllers\\TaskController@index');
-$app->post('/api/tasks', 'App\\Controllers\\TaskController@create');
-$app->delete('/api/tasks/{id}', 'App\\Controllers\\TaskController@destroy');
-
 $app->run();
 ```
 
-## 6. Run it.
+## 7. Run It
+
+Start the server.
 
 ```bash
-php -S localhost:8080 public/index.php
+php -S localhost:8080 -t public public/index.php
 ```
 
-Curl it to test. It works. 
+Open `http://localhost:8080` in your browser. You'll see your styled Tailwind app. It's rendering instantly because the router doesn't parse XML and the container doesn't reflect your classes. 
 
-```bash
-curl -X POST http://localhost:8080/api/tasks -d '{"title":"do work"}'
-curl http://localhost:8080/api/tasks
-```
+## 8. Ship to Production (AOT)
 
-## 7. AOT 
-
-For production, compile the garbage out of it. 
+Before you deploy this to your VPS, compile the reflection away. If you skip this, it will scan attributes on every single request and I will judge you.
 
 ```bash
 php bin/aether aot:compile
 ```
 
-That's it. It's not hard. Go write some code.
+Now use a real process manager like RoadRunner or `php bin/aether serve` to keep the app resident in memory. Stop killing your process on every request. 
